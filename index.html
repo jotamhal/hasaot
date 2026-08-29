@@ -251,7 +251,7 @@ const PLACES=['רגבה','עברון','בית העמק'];
 
 /* המפגש יורש מהחוג, אלא אם נערך במפורש. זו שכבת החריגים. */
 const sStart=(a,s)=>s.start||a.start;
-const sT1   =(a,s)=>minus15(sStart(a,s));
+const sT1   =(a,s)=>minusMin(sStart(a,s), a.lead ?? 15);
 const sT2   =(a,s)=>s.end||a.t2;
 const sPlace=(a,s)=>s.place||a.place;
 const changed=(a,s)=>[s.origDate&&'הועבר', (s.start||s.end)&&'שעה שונה',
@@ -500,20 +500,22 @@ const EMOJIS=['🥋','🤖','🏊','🎨','⚽','🎹','🩰','🎾','🧗','♟
 const INVITE={by:'דנה כהן',name:'ציור',emoji:'🎨',dow:2,start:'17:00',t2:'18:30',
   members:[{n:'דנה',adm:1},{n:'תמר'},{n:'אבי'}],kids:{'שירה':'תמר','יובל':'אבי'}};
 
-const minus15=t=>{const[h,m]=t.split(':').map(Number);let x=h*60+m-15;if(x<0)x+=1440;
+const minusMin=(t,n)=>{const[h,m]=t.split(':').map(Number);let x=h*60+m-n;if(x<0)x+=1440;
   return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');};
+const minus15=t=>minusMin(t,15);
 const whenTxt=(days,s,e)=>{
   const d=[...days].sort().map(x=>DOWL[x]);
   const list=d.length===1?d[0]:d.slice(0,-1).join(', ')+' ו־'+d[d.length-1];
   return (d.length===1?'יום ':'ימי ')+list+' · '+s+'–'+e;
 };
 
-const STEPS={create:['details','kids','invite'], join:['landing','mail','code','kids']};
+const STEPS={create:['details','where','kids','invite'], join:['landing','mail','code','kids']};
 const wz=()=>view.wz;
 
 function stepValid(){
   const w=view.wz, k=STEPS[view.kind][view.step];
-  if(k==='details') return !!(w.name&&w.name.trim()&&w.days.length&&w.start&&w.end);
+  if(k==='details') return !!(w.name&&w.name.trim()&&w.days.length&&w.start&&w.end&&w.end>w.start);
+  if(k==='where')   return w.placeMode==='varies' || !!(w.placeMode==='fixed'&&w.place);
   if(k==='mail')    return /.+@.+\..+/.test(w.mail||'');
   if(k==='code')    return (w.code||'').length===6;
   return true;
@@ -521,7 +523,8 @@ function stepValid(){
 
 function flowHTML(){
   const w=view.wz, steps=STEPS[view.kind], k=steps[view.step];
-  const body={details:fDetails,kids:fKids,invite:fInvite,landing:fLanding,mail:fMail,code:fCode}[k](w);
+  const body={details:fDetails,where:fWhere,kids:fKids,invite:fInvite,
+              landing:fLanding,mail:fMail,code:fCode}[k](w);
   const last=view.step===steps.length-1;
   const cta=k==='landing'?'להצטרף לחוג':last?'סיום':'המשך';
   return `<div class="top"><button class="iconbtn" data-a="fback">›</button>
@@ -547,9 +550,37 @@ function fDetails(w){
     <div class="field"><div class="flab">שעות החוג</div>
       <div class="two"><input class="inp" type="time" data-f="start" value="${w.start||''}">
       <input class="inp" type="time" data-f="end" value="${w.end||''}"></div></div>
-    <div class="field"><div class="flab">עד מתי</div>
+`;
+}
+function fWhere(w){
+  const other = w.placeMode==='fixed' && w.place && !PLACES.includes(w.place);
+  const lead  = w.lead ?? 15;
+  return `<h2 class="fh">איפה ומתי אוספים?</h2>
+    <p class="fs">אלה הפרטים שקובעים לאן ולמתי נוסעים.</p>
+
+    <div class="field"><div class="flab">מיקום המפגשים</div>
+      <div class="pick">${PLACES.map(pl=>`<span class="pk ${w.placeMode==='fixed'&&w.place===pl?'on':''}"
+        data-a="f-place" data-v="${esc(pl)}">${esc(pl)}</span>`).join('')}
+        <span class="pk ${other?'on':''}" data-a="f-place" data-v="__other">אחר</span></div>
+      ${other?`<input class="inp" style="margin-top:9px" data-f="wzPlace" value="${esc(w.place)}"
+        placeholder="שם המקום">`:''}
+      <div class="pick" style="margin-top:9px">
+        <span class="pk ${w.placeMode==='varies'?'on':''}" data-a="f-place" data-v="__varies"
+          style="flex:1">משתנה בכל מפגש</span></div>
+      <p class="fs" style="margin:9px 2px 0;font-size:13px">${w.placeMode==='varies'
+        ? 'כל מפגש יקבל מיקום משלו, ומפגש שלא נקבע לו יסומן באדום.'
+        : 'ברירת מחדל לכל המפגשים. תמיד אפשר לשנות למפגש בודד.'}</p></div>
+
+    <div class="field"><div class="flab">כמה דקות לפני אוספים</div>
+      <div class="pick">${[0,10,15,20,30].map(n=>`<span class="pk ${lead===n?'on':''}"
+        data-a="f-lead" data-v="${n}">${n===0?'בדיוק':n}</span>`).join('')}</div>
+      <p class="fs" style="margin:9px 2px 0;font-size:13px">שעת האיסוף שתוצג על הלוח:
+        <b>${w.start?minusMin(w.start,lead):'—'}</b></p></div>
+
+    <div class="field"><div class="flab">עד מתי נמשך החוג</div>
       <input class="inp" type="date" data-f="until" value="${w.until||'2027-06-30'}"></div>`;
 }
+
 function fKids(w){
   const join=view.kind==='join';
   return `<h2 class="fh">מי מהילדים ${join?'מצטרף':'הולך לחוג'}?</h2>
@@ -607,7 +638,9 @@ function fCode(w){
 function buildCreated(){
   const w=view.wz, id='a'+(state.acts.length+1), days=[...w.days].sort();
   const a={id,name:w.name.trim(),emoji:w.emoji||'🏅',when:whenTxt(days,w.start,w.end),
-    t1:minus15(w.start),t2:w.end,myKids:[...(w.kids||[])],unmarked:[],
+    place:w.placeMode==='varies'?'':(w.place||''), lead:w.lead??15,
+    weekdays:days, start:w.start,
+    t1:minusMin(w.start,w.lead??15),t2:w.end,myKids:[...(w.kids||[])],unmarked:[],
     members:[{n:ME,adm:1}],pending:[],sessions:[],autoAtt:!!w.auto};
   [0,1].forEach(wk=>days.forEach(d=>{
     const s={id:id+wk+d,dow:d,date:DATES[wk][d],week:wk,att:{},offers:[],
@@ -1022,7 +1055,7 @@ document.addEventListener('click',e=>{
       return;
     case 'flow':{
       const k=el.dataset.k;
-      view.wz = k==='create' ? {days:[],emoji:'',kids:[],seats:state.car.seats,auto:1}
+      view.wz = k==='create' ? {days:[],emoji:'',kids:[],seats:state.car.seats,auto:1,lead:15}
                              : {kids:[],seats:state.car.seats};
       navReset({type:'flow',kind:k,step:0}); return;
     }
@@ -1037,6 +1070,13 @@ document.addEventListener('click',e=>{
     }
     case 'f-emoji': view.wz.emoji=el.dataset.v; render(); return;
     case 'f-seats': view.wz.seats=+el.dataset.v; render(); return;
+    case 'f-lead':  view.wz.lead=+el.dataset.v; render(); return;
+    case 'f-place':{
+      const v=el.dataset.v;
+      if(v==='__varies'){ view.wz.placeMode='varies'; view.wz.place=''; }
+      else { view.wz.placeMode='fixed'; view.wz.place = v==='__other' ? '' : v; }
+      render(); return;
+    }
     case 'f-auto':  view.wz.auto=!view.wz.auto; render(); return;
     case 'f-day':{
       const d=+el.dataset.v, i=view.wz.days.indexOf(d);
