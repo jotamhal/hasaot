@@ -697,7 +697,14 @@ function paint(){
   render();
   if(top && top.type!=='act') top.draw(); else layer.innerHTML='';
 }
-window.addEventListener('popstate',()=>{ nav.pop(); paint(); });
+/* רענון משאיר state ישן בהיסטוריה בעוד המחסנית מתחילה ריקה — לאפס בסיס */
+history.replaceState({n:0},'');
+/* go(-k) מפעיל אירוע אחד בלבד, אז מסתנכרנים לפי העומק שנשמר ולא מורידים אחד */
+window.addEventListener('popstate',e=>{
+  const n = (e.state && e.state.n) || 0;
+  if(nav.length > n) nav.length = n;
+  paint();
+});
 
 function push(fn){ navGo({type:'sheet',draw:fn}); }
 function pop(){ navBack(1); }
@@ -1085,6 +1092,9 @@ document.addEventListener('input',e=>{
 
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-a]'); if(!el) return;
+  /* קליק בתוך גיליון שאינו על פקד — מטפס החוצה אל הרקע וסוגר בטעות */
+  const stop=e.target.closest('[data-stop]');
+  if(stop && !stop.contains(el)) return;
   const a=el.dataset.a, id=el.dataset.i, sid=el.dataset.s;
   e.stopPropagation();
   switch(a){

@@ -869,7 +869,14 @@ function paint(){
   render();
   if(top && top.type!=='act') top.draw(); else layer.innerHTML='';
 }
-window.addEventListener('popstate',()=>{ nav.pop(); paint(); });
+/* רענון משאיר state ישן בהיסטוריה בעוד המחסנית מתחילה ריקה — לאפס בסיס */
+history.replaceState({n:0},'');
+/* go(-k) מפעיל אירוע אחד בלבד, אז מסתנכרנים לפי העומק שנשמר ולא מורידים אחד */
+window.addEventListener('popstate',e=>{
+  const n = (e.state && e.state.n) || 0;
+  if(nav.length > n) nav.length = n;
+  paint();
+});
 
 function push(fn){ navGo({type:'sheet',draw:fn}); }
 function pop(){ navBack(1); }
@@ -1195,10 +1202,19 @@ function cancelWarn(aid,sid,dirs){
     <div class="btns"><button class="btn s" data-a="close">להשאיר</button>
     <button class="btn p" data-a="do-cancel" data-i="${aid}" data-s="${sid}" data-d="${dirs.join(',')}">לבטל בכל זאת</button></div>`);
 }
-function applyDrive(aid,sid,dirs,v){
+async function applyDrive(aid,sid,dirs,v){
   const s=sess(aid,sid); dirs.forEach(d=>s.mine[d]=v);
   if(v) s.fresh=false;
   render();
+  try{
+    const to=!!s.mine.to, from=!!s.mine.from;
+    const {error} = (to||from)
+      ? await sb.from('offers').upsert({session_id:s.id, user_id:ME_ID,
+          drives_to:to, drives_from:from, seats:s.mine.seats})
+      : await sb.from('offers').delete().eq('session_id',s.id).eq('user_id',ME_ID);
+    if(error) throw error;
+  }catch(e){ toast('לא נשמר: '+(e.message||e)); }
+  reload();
   /* אם נשארנו בלי הסעה — מחליפים את חלונית האזהרה בהודעת השיתוף */
   if(!v && !(s.mine.to||s.mine.from)) shareModal(actById(aid),s,'cancel');
   else { navCloseLayers(); if(v) toast('מסיעים ביום זה'); }
@@ -1303,8 +1319,11 @@ document.addEventListener('input',e=>{
   const b=document.querySelector('.cta button'); if(b) b.classList.toggle('off',!stepValid());
 });
 
-document.addEventListener('click',e=>{
+document.addEventListener('click',async e=>{
   const el=e.target.closest('[data-a]'); if(!el) return;
+  /* קליק בתוך גיליון שאינו על פקד — מטפס החוצה אל הרקע וסוגר בטעות */
+  const stop=e.target.closest('[data-stop]');
+  if(stop && !stop.contains(el)) return;
   const a=el.dataset.a, id=el.dataset.i, sid=el.dataset.s;
   e.stopPropagation();
   switch(a){
@@ -1428,8 +1447,20 @@ document.addEventListener('click',e=>{
     /* הריבועים */
     case 'kid':{
       const s=sess(id,sid), k=el.dataset.k;
-      if(s.att[k]) delete s.att[k]; else s.att[k]=1;
-      s.fresh=false; render(); toast(k+(s.att[k]?' · מגיעים ביום זה':' · לא מגיעים ביום זה')); return;
+      const kid=state.kids.find(x=>x.name===k);
+      if(!kid){ toast('הילד לא נמצא'); return; }
+      const on=!s.att[k];
+      if(on) s.att[k]=1; else delete s.att[k];      /* אופטימי, ואז אמת מהשרת */
+      s.fresh=false; render();
+      toast(k+(on?' · מגיעים ביום זה':' · לא מגיעים ביום זה'));
+      try{
+        const {error} = on
+          ? await sb.from('attendance').upsert({session_id:s.id, kid_id:kid.id,
+              attending:true, needs_to:true, needs_from:true, updated_by:ME_ID})
+          : await sb.from('attendance').delete().eq('session_id',s.id).eq('kid_id',kid.id);
+        if(error) throw error;
+      }catch(e){ toast('לא נשמר: '+(e.message||e)); }
+      await reload(); return;
     }
     case 'drive':{
       const s=sess(id,sid);
@@ -1449,14 +1480,24 @@ document.addEventListener('click',e=>{
     }
 
     /* מספרים ומתגים */
-    case 'seats':
+    case 'seats':{
       state.car.seats=+el.dataset.v;
       state.acts.forEach(x=>x.sessions.forEach(s=>{ if(!s.customSeats) s.mine.seats=state.car.seats; }));
-      sCar(); render(); return;
+      sCar(); render();
+      const {error} = await sb.from('profiles').update({seats:state.car.seats}).eq('id',ME_ID);
+      if(error) toast('לא נשמר: '+error.message);
+      return;
+    }
     case 'dseats':{
       const s=sess(id,sid);
       s.mine.seats=+el.dataset.v; s.customSeats=true;
-      sCtx(id,sid); render(); return;
+      sCtx(id,sid); render();
+      if(s.mine.to||s.mine.from){
+        const {error} = await sb.from('offers')
+          .update({seats:s.mine.seats}).eq('session_id',s.id).eq('user_id',ME_ID);
+        if(error) toast('לא נשמר: '+error.message); else reload();
+      }
+      return;
     }
 
     /* --- עריכת ימים ושעות --- */
