@@ -947,6 +947,23 @@ function shareModal(a,s,kind){
       <button class="btn s" data-a="close">לא עכשיו</button>
       <button class="btn g" data-a="wa" data-t="${encodeURIComponent(t)}">שליחה בוואטסאפ</button></div>`);
 }
+/* עדכון פרטי מפגש — ההודעה קופצת מיד, כי מי שלא ייכנס ללוח לא יידע */
+function editShare(a,s,diffs,title){
+  const NL = String.fromCharCode(10);
+  const t = 'עדכון · ' + a.name + NL
+          + 'יום ' + DOW[s.dow] + ' ' + s.date + NL + NL
+          + diffs.join(NL)
+          + (s.cancelled ? '' : NL + NL + 'הפרטים המעודכנים: ' + sT1(a,s) + '–' + sT2(a,s) + ' · ' + sPlace(a,s))
+          + NL + NL + '👉 hasaot.app/' + a.id;
+  const html = `<h3>${title||'פרטי המפגש עודכנו'}</h3>
+    <p>מי שלא ייכנס ללוח לא ידע שהשתנה משהו. כדאי לשלוח לקבוצה.</p>
+    <div class="wa">${esc(t)}</div><div class="btns">
+      <button class="btn s" data-a="close">לא עכשיו</button>
+      <button class="btn g" data-a="wa" data-t="${encodeURIComponent(t)}">שליחה בוואטסאפ</button></div>`;
+  /* מחליף את מה שפתוח במקום לסגור ואז לפתוח — סגירה היא אסינכרונית */
+  navReplace({type:'modal', draw:()=>modalHTML(html)});
+}
+
 function cancelWarn(aid,sid,dirs){
   const s=sess(aid,sid), pax=new Set();
   dirs.forEach(d=>{const c=assign(s,d).cars.find(c=>c.mine); if(c) c.pax.forEach(p=>{if(KIDS[p]!==ME) pax.add(p);});});
@@ -1139,6 +1156,8 @@ document.addEventListener('click',e=>{
       const wk=DATES.findIndex(w=>w.includes(x.date)), di=wk<0?-1:DATES[wk].indexOf(x.date);
       const iso=di<0?'':'2026-'+String(+x.date.split('.')[1]).padStart(2,'0')+'-'+String(+x.date.split('.')[0]).padStart(2,'0');
       view.ed={date:iso,start:sStart(a,x),end:sT2(a,x),place:sPlace(a,x),note:x.note||''};
+      view.ed.was={date:x.date,dow:x.dow,start:sStart(a,x),end:sT2(a,x),
+                   place:sPlace(a,x),note:x.note||''};
       push(((i,j)=>()=>sEdit(i,j))(id,sid)); return;
     }
     case 'ed-place':
@@ -1146,6 +1165,7 @@ document.addEventListener('click',e=>{
       sEdit(id, sid); return;
     case 'ed-sess-save':{
       const a=actById(id), x=sess(id,sid), e=view.ed;
+      if(!e.start||!e.end||e.end<=e.start){ toast('שעת הסיום צריכה להיות אחרי ההתחלה'); return; }
       if(e.start!==a.start||e.end!==a.t2){ x.start=e.start; x.end=e.end; }
       else { delete x.start; delete x.end; }
       x.place = e.place&&e.place!==a.place ? e.place : undefined;
@@ -1162,7 +1182,16 @@ document.addEventListener('click',e=>{
           a.sessions.sort((m,n)=>m.week-n.week||DATES[m.week].indexOf(m.date)-DATES[n.week].indexOf(n.date));
         }
       }
-      pop(); toast('המפגש עודכן'); return;
+      const was=e.was, diffs=[];
+      if(was.date!==x.date)
+        diffs.push('📅 תאריך: יום '+DOW[x.dow]+' '+x.date+'  (היה יום '+DOW[was.dow]+' '+was.date+')');
+      if(was.start!==sStart(a,x)||was.end!==sT2(a,x))
+        diffs.push('🕒 שעה: '+sStart(a,x)+'–'+sT2(a,x)+'  (היה '+was.start+'–'+was.end+')');
+      if(was.place!==sPlace(a,x))
+        diffs.push('📍 מיקום: '+sPlace(a,x)+'  (היה '+was.place+')');
+      if((was.note||'')!==(x.note||'')&&x.note) diffs.push('נוסף: '+x.note);
+      if(!diffs.length){ pop(); toast('לא השתנה כלום'); return; }
+      render(); editShare(a,x,diffs); return;
     }
     case 'ed-reset':{
       const x=sess(id,sid);
@@ -1188,7 +1217,8 @@ document.addEventListener('click',e=>{
       return;
     }
     case 'do-cancel-sess':{
-      sess(id,sid).cancelled=true; navCloseLayers(); render(); toast('המפגש בוטל'); return;
+      const a=actById(id), x=sess(id,sid); x.cancelled=true; render();
+      editShare(a,x,['🚫 המפגש בוטל'],'המפגש בוטל'); return;
     }
     case 'ed-day':{
       const x=+el.dataset.v, i=view.ed.days.indexOf(x);
