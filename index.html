@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef1f5">
+<title>הסעות לחוג — מוקאפ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#eef1f5; --card:#fff; --ink:#111827; --muted:#6b7280; --line:#e3e7ee;
+  --kid:#2563eb; --drive:#ea580c; --drive-soft:#fff0e6;
+  --ok:#15803d; --ok-soft:#e6f4ea;
+  --bad:#dc2626; --bad-soft:#fdeaea;
+  --none:#9aa3af; --none-soft:#f1f3f7;
+  --r:18px;
+}
+html,body{margin:0;padding:0;direction:rtl;background:var(--bg);color:var(--ink);
+  font-family:"Heebo",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.demo{background:#fef3c7;border:1px solid #fde68a;color:#78350f;border-radius:13px;
+  padding:9px 12px;margin-bottom:12px;font-size:12.5px;font-weight:600;line-height:1.5}
+body{overscroll-behavior-y:none}
+#app{max-width:520px;margin:0 auto;min-height:100vh;padding:0 14px calc(28px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+
+.top{display:flex;align-items:center;gap:10px;padding:14px 2px 10px;position:sticky;top:0;
+  background:linear-gradient(var(--bg) 72%,rgba(238,241,245,0));z-index:20}
+.top h1{font-size:20px;font-weight:800;margin:0;flex:1;line-height:1.25}
+.top h1 small{display:block;font-size:12.5px;font-weight:500;color:var(--muted);margin-top:2px}
+.iconbtn{width:38px;height:38px;border-radius:12px;background:#fff;border:1px solid var(--line);
+  display:grid;place-items:center;font-size:18px;flex:none;box-shadow:0 1px 2px rgba(16,24,40,.04);position:relative}
+.iconbtn .bdg{position:absolute;top:-4px;left:-4px;background:var(--bad);color:#fff;font-size:10px;
+  font-weight:800;min-width:17px;height:17px;border-radius:99px;display:grid;place-items:center;padding:0 4px}
+
+.nextup{background:#111827;color:#fff;border-radius:var(--r);padding:13px 15px;margin-bottom:16px}
+.nextup .lbl{font-size:11.5px;font-weight:700;letter-spacing:.06em;color:#9ca3af;margin-bottom:5px}
+.nextup .main{font-size:15px;font-weight:600;line-height:1.55}
+.nextup .warn{color:#fca5a5;font-weight:700}
+
+.board{background:var(--card);border-radius:var(--r);padding:15px;margin-bottom:12px;border:1px solid var(--line);
+  box-shadow:0 1px 2px rgba(16,24,40,.05);display:flex;gap:13px;align-items:flex-start;width:100%;text-align:right}
+.board .em{width:48px;height:48px;border-radius:14px;background:var(--none-soft);display:grid;place-items:center;font-size:24px;flex:none}
+.board .bd{flex:1;min-width:0}
+.board .nm{font-size:17px;font-weight:700}
+.board .sub{font-size:13px;color:var(--muted);margin-top:3px}
+.board .st{margin-top:9px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px}
+.st.ok{background:var(--ok-soft);color:var(--ok)}
+.st.bad{background:var(--bad-soft);color:var(--bad)}
+.st.none{background:var(--none-soft);color:#4b5563}
+.addboard{width:100%;border:1.5px dashed #c7cedb;border-radius:var(--r);padding:15px;color:var(--muted);
+  font-weight:600;font-size:14.5px;margin-top:4px}
+
+.week{display:flex;align-items:center;gap:10px;margin:20px 2px 11px}
+.week b{font-size:13px;font-weight:800}
+.week span{font-size:12.5px;color:var(--muted)}
+.week i{flex:1;height:1px;background:#dbe0e9}
+
+.day{background:var(--card);border-radius:var(--r);border:1px solid var(--line);
+  box-shadow:0 1px 3px rgba(16,24,40,.06);margin-bottom:12px;overflow:hidden}
+.dayhead{display:flex;align-items:center;gap:8px;padding:11px 14px 9px}
+.dayhead .dow{font-size:16px;font-weight:800}
+.dayhead .dt{font-size:15px;font-weight:700;color:var(--muted)}
+.dayhead .tm{font-size:12.5px;color:var(--muted);flex:1}
+.dayhead .kebab{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#9aa3af;font-size:17px;flex:none}
+
+/* ============ שני החצאים ============ */
+.halves{display:flex;gap:8px;padding:0 10px 10px}
+.half{flex:1;border-radius:14px;min-height:114px;border:1.5px solid var(--line);background:#fbfcfe;
+  transition:transform .07s,background .13s,border-color .13s}
+.half:active{transform:scale(.975)}
+.sw2{width:36px;height:21px;border-radius:99px;background:#d7dde7;position:relative;flex:none;transition:background .16s}
+.sw2::after{content:"";position:absolute;top:2.5px;right:2.5px;width:16px;height:16px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.28);transition:transform .17s}
+.sw2.on::after{transform:translateX(-15px)}
+.hcap{font-size:12.5px;font-weight:800;color:#8b94a3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.hval{font-size:15.5px;font-weight:800;color:#b3bac6;text-align:center;line-height:1.25}
+
+/* --- חצי הילד --- */
+.half.kid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:10px}
+.half.kid.on{background:var(--kid);border-color:var(--kid);box-shadow:inset 0 2px 9px rgba(0,0,0,.17)}
+.half.kid.on .hcap{color:rgba(255,255,255,.78)}
+.half.kid.on .hval{color:#fff}
+.half.kid.on .sw2{background:rgba(255,255,255,.42)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center;justify-content:center}
+.chip{font-size:13px;font-weight:700;padding:5px 11px;border-radius:999px;background:#eef1f6;color:#aab1bd;border:1.5px solid transparent}
+.chip.on{background:var(--kid);color:#fff}
+.half.kid.on .chip{background:rgba(255,255,255,.22);color:rgba(255,255,255,.75)}
+.half.kid.on .chip.on{background:#fff;color:var(--kid)}
+
+/* --- חצי ההסעה: ימין גדול (און/אוף) + שמאל שני כפתורי כיוון --- */
+.half.drive{flex:1.18;display:flex;flex-direction:row;align-items:stretch;gap:7px;padding:9px}
+.half.drive .hval{font-size:14px;white-space:nowrap}
+.dmain{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.dlegs{width:54px;flex:none;display:flex;flex-direction:column;gap:6px}
+.leg{flex:1;min-height:38px;display:grid;place-items:center;font-size:13px;font-weight:800;border-radius:10px;
+  background:#eef1f6;color:#aab1bd;transition:background .13s,color .13s}
+.seatnote{font-size:10.5px;font-weight:700;color:#98a2b3;text-align:center;line-height:1.3}
+.half.drive.on{background:var(--drive);border-color:var(--drive);box-shadow:inset 0 2px 9px rgba(0,0,0,.17)}
+.half.drive.on .hval{color:#fff}
+.half.drive.on .sw2{background:rgba(255,255,255,.45)}
+.half.drive.on .seatnote{color:rgba(255,255,255,.85)}
+.half.drive.on .leg{background:rgba(255,255,255,.22);color:rgba(255,255,255,.72)}
+.half.drive.on .leg.on{background:#fff;color:var(--drive)}
+
+.strip{width:100%;display:flex;align-items:center;gap:9px;padding:11px 14px;border-top:1px solid var(--line);
+  font-size:13.5px;font-weight:600;text-align:right}
+.strip .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.strip .txt{flex:1;line-height:1.45}
+.strip .chev{color:#b6bdc9;font-size:12px;transition:transform .15s}
+.day.open .strip .chev{transform:rotate(180deg)}
+.strip.ok{background:var(--ok-soft);color:#14532d}.strip.ok .dot{background:var(--ok)}
+.strip.bad{background:var(--bad-soft);color:#7f1d1d}.strip.bad .dot{background:var(--bad)}
+.strip.none{background:var(--none-soft);color:#4b5563}.strip.none .dot{background:var(--none)}
+
+.det{display:none;padding:4px 14px 14px;background:#f8fafc;border-top:1px solid var(--line)}
+.day.open .det{display:block}
+.legblock{padding:12px 0;border-bottom:1px dashed #dde3ec}
+.legblock:last-of-type{border-bottom:0}
+.legttl{font-size:12px;font-weight:800;letter-spacing:.04em;color:#6b7280;margin-bottom:9px}
+.car{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px}
+.car .av{width:30px;height:30px;border-radius:50%;background:var(--drive-soft);color:var(--drive);
+  display:grid;place-items:center;font-size:13px;font-weight:800;flex:none}
+.car.mine .av{background:var(--drive);color:#fff}
+.car .cinfo{flex:1;min-width:0}
+.car .cnm,.car .pax{display:block}
+.car .cnm{font-size:14px;font-weight:700}
+.car .cnm em{font-style:normal;font-weight:600;color:var(--muted);font-size:12.5px}
+.car .pax{font-size:13px;color:#374151;margin-top:2px;line-height:1.5}
+.car .pax b{font-weight:700;color:var(--kid)}
+.empty{color:var(--bad);font-size:13.5px;font-weight:700}
+.wait{font-size:13px;color:#7f1d1d;background:var(--bad-soft);border-radius:11px;padding:9px 11px;margin-top:8px;line-height:1.5}
+.unmarked{font-size:12.5px;color:#4b5563;background:#eef1f6;border-radius:11px;padding:9px 11px;margin-top:11px;line-height:1.5}
+.shareb{width:100%;margin-top:12px;background:#111827;color:#fff;border-radius:13px;padding:12px;
+  font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
+
+/* ============ גיליונות וחלוניות ============ */
+.scrim{position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;
+  padding:8px 16px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;animation:up .2s ease}
+@keyframes up{from{transform:translateY(28px);opacity:.6}to{transform:none;opacity:1}}
+.grab{width:38px;height:4px;border-radius:2px;background:#dde3ec;margin:6px auto 12px}
+.sh-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.sh-back{width:32px;height:32px;border-radius:10px;background:#f1f3f7;display:grid;place-items:center;font-size:17px;flex:none;margin-top:2px}
+.sh-tt{flex:1;min-width:0}
+.sh-tt h3{margin:0;font-size:18px;font-weight:800}
+.sh-tt div{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.45}
+.row{display:flex;align-items:center;gap:11px;padding:13px 2px;border-bottom:1px solid var(--line);width:100%;text-align:right;font-size:15px}
+.row:last-child{border-bottom:0}
+.row .ic{width:26px;text-align:center;font-size:17px;flex:none;color:#6b7280}
+.row .lb{flex:1;min-width:0}
+.row .lb small{display:block;font-size:12.5px;color:var(--muted);font-weight:500;margin-top:2px;line-height:1.45}
+.row .rt{color:var(--muted);font-size:13.5px;font-weight:600;flex:none}
+.tag{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;background:#eef1f6;color:#4b5563;flex:none}
+.tag.adm{background:#e8efff;color:var(--kid)}
+.tag.warn{background:var(--bad-soft);color:var(--bad)}
+.sw{width:46px;height:27px;border-radius:99px;background:#dde3ec;position:relative;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;right:3px;width:21px;height:21px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .16s}
+.sw.on{background:var(--kid)}
+.sw.on::after{transform:translateX(-19px)}
+.sw.on.amber{background:var(--drive)}
+.step{display:flex;align-items:center;gap:4px;flex:none}
+.step button{width:32px;height:32px;border-radius:10px;background:#f1f3f7;font-size:18px;font-weight:700;display:grid;place-items:center;color:#374151}
+.step span{min-width:34px;text-align:center;font-size:16px;font-weight:800}
+.pendttl{font-size:12px;font-weight:800;color:#92400e;margin:4px 0 2px}
+.pend{background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:12px;margin:8px 0}
+.pend .pn{font-size:14.5px;font-weight:700}
+.pend .ps{font-size:12.5px;color:#92400e;margin-top:2px;line-height:1.45}
+.pend .pb{display:flex;gap:8px;margin-top:10px}
+.pend .pb button{flex:1;padding:9px;border-radius:10px;font-size:13.5px;font-weight:700}
+.pend .pb .yes{background:var(--ok);color:#fff}
+.pend .pb .no{background:#f1f3f7;color:#4b5563}
+.hint{font-size:12.5px;color:#4b5563;background:#eef1f6;border-radius:12px;padding:10px 12px;margin:2px 0 10px;line-height:1.55}
+
+.modal{background:#fff;border-radius:20px;max-width:400px;width:calc(100% - 36px);padding:20px;margin:auto;animation:pop .16s ease}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
+.scrim.center{align-items:center;padding:18px}
+.modal h3{margin:0 0 8px;font-size:17.5px;font-weight:800}
+.modal p{margin:0 0 14px;font-size:14.5px;color:#374151;line-height:1.6}
+.wa{background:#f8fafc;border:1px solid var(--line);border-radius:13px;padding:12px;font-size:13.5px;
+  line-height:1.65;white-space:pre-wrap;color:#1f2937;margin-bottom:14px}
+.btns{display:flex;gap:9px}
+.btn{flex:1;padding:13px;border-radius:13px;font-size:14.5px;font-weight:700;text-align:center}
+.btn.p{background:#111827;color:#fff}.btn.g{background:#25d366;color:#fff}.btn.s{background:#f1f3f7;color:#374151}
+.toast{position:fixed;bottom:22px;right:50%;transform:translateX(50%);background:#111827;color:#fff;padding:11px 18px;
+  border-radius:999px;font-size:13.5px;font-weight:600;z-index:90;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap}
+.note{font-size:12px;color:#9aa3af;text-align:center;padding:18px 20px 4px;line-height:1.6}
+
+/* ============ זרימת הצטרפות ============ */
+.prog{display:flex;gap:5px;padding:2px 2px 16px}
+.prog i{flex:1;height:3px;border-radius:2px;background:#dbe0e9}
+.prog i.on{background:var(--kid)}
+.fh{margin:0 2px 6px;font-size:23px;font-weight:800;line-height:1.25;text-wrap:balance}
+.fs{margin:0 2px 20px;font-size:14.5px;color:var(--muted);line-height:1.6}
+.field{margin-bottom:16px}
+.flab{font-size:12.5px;font-weight:800;color:#6b7280;margin:0 2px 7px}
+.inp{width:100%;background:#fff;border:1.5px solid var(--line);border-radius:13px;padding:13px 14px;
+  font:inherit;font-size:16px;font-weight:600;color:var(--ink)}
+.inp:focus{outline:none;border-color:var(--kid);box-shadow:0 0 0 3px #dbeafe}
+.inp::placeholder{color:#b3bac6;font-weight:500}
+.two{display:flex;gap:9px}
+.two>*{flex:1;min-width:0}
+.pick{display:flex;flex-wrap:wrap;gap:7px}
+.pk{padding:10px 14px;border-radius:12px;background:#fff;border:1.5px solid var(--line);
+  font-size:14.5px;font-weight:700;color:#9aa3af;min-width:46px;text-align:center}
+.pk.on{background:var(--kid);border-color:var(--kid);color:#fff}
+.pk.em{font-size:21px;padding:8px 11px;min-width:0}
+.pk.em.on{background:#dbeafe;border-color:var(--kid)}
+.cta{position:sticky;bottom:0;padding:14px 0 calc(14px + env(safe-area-inset-bottom));
+  background:linear-gradient(rgba(238,241,245,0),var(--bg) 30%)}
+.cta button{width:100%;background:var(--kid);color:#fff;border-radius:15px;padding:16px;font-size:16px;font-weight:800}
+.cta button.off{background:#c8cfda}
+.cta .alt{width:100%;text-align:center;padding:12px 0 0;font-size:14px;font-weight:600;color:var(--muted)}
+.inv{background:#fff;border:1.5px solid var(--line);border-radius:var(--r);padding:18px;text-align:center;margin-bottom:18px}
+.inv .av{width:54px;height:54px;border-radius:50%;background:var(--kid);color:#fff;font-size:22px;font-weight:800;
+  display:grid;place-items:center;margin:0 auto 12px}
+.inv .t{font-size:16px;font-weight:600;color:#374151;line-height:1.6}
+.inv .t b{font-weight:800;color:var(--ink)}
+.inv .meta{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:14px;color:var(--muted);line-height:1.7}
+.code{display:flex;gap:8px;direction:ltr;justify-content:center}
+.code input{width:46px;height:56px;text-align:center;font-size:22px;font-weight:800;
+  border:1.5px solid var(--line);border-radius:13px;background:#fff;color:var(--ink)}
+.code input:focus{outline:none;border-color:var(--kid);box-shadow:0 0 0 3px #dbeafe}
+.lonely{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r);padding:14px;margin-bottom:14px}
+.lonely .lt{font-size:14.5px;font-weight:700;color:#78350f}
+.lonely .ls{font-size:13px;color:#92400e;margin-top:4px;line-height:1.55}
+.lonely button{width:100%;margin-top:11px;background:#111827;color:#fff;border-radius:12px;padding:11px;font-size:14px;font-weight:700}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="layer"></div>
+<script>
+/* ===================== נתוני הדגמה ===================== */
+const ME='יותם', MYMAIL='yotam@example.com';
+const KIDS={'דני':ME,'מאיה':ME,'נועה':'דנה','איתי':'אורי','שירה':'מיכל','רוני':'רותם','עומר':'ליאת'};
+const DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const DOWL=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+
+/* כל חוג הוא לוח בפני עצמו: רשימת משפחות משלו, הזמנה משלו, אישורים משלו. */
+const state={
+  car:{seats:5},
+  household:[{name:ME,mail:MYMAIL},{name:'אורנה',mail:'orna@…'}],
+  kids:[{name:'דני',acts:['judo']},{name:'מאיה',acts:['robo']}],
+  acts:[
+    {id:'judo',name:'ג׳ודו',emoji:'🥋',when:'ימי ב׳ ו־ד׳ · 16:00–17:30',t1:'15:45',t2:'17:30',
+     myKids:['דני'],unmarked:['רותם'],
+     members:[{n:'יותם',adm:1},{n:'דנה'},{n:'אורי',adm:1},{n:'מיכל'},{n:'רותם'}],
+     pending:[{name:'יעל לוי',kid:'עידו',mail:'yael@…'}],
+     sessions:[
+      {id:'s1',dow:1,date:'31.8',week:0,att:{'דני':1,'נועה':1,'איתי':1,'שירה':1},
+       offers:[{by:'דנה',to:1,from:1,seats:5}],mine:{to:0,from:0,seats:5}},
+      {id:'s2',dow:3,date:'2.9',week:0,att:{'דני':1,'נועה':1,'איתי':1,'שירה':1},
+       offers:[{by:'מיכל',to:1,from:0,seats:5}],mine:{to:0,from:0,seats:5}},
+      {id:'s3',dow:1,date:'7.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:5},fresh:true},
+      {id:'s4',dow:3,date:'9.9',week:1,att:{'דני':1,'נועה':1,'רוני':1},offers:[],mine:{to:1,from:1,seats:5}},
+     ]},
+    {id:'robo',name:'רובוטיקה',emoji:'🤖',when:'ימי ג׳ · 17:00–18:30',t1:'16:45',t2:'18:30',
+     myKids:['מאיה'],unmarked:[],
+     members:[{n:'יותם'},{n:'דנה'},{n:'ליאת',adm:1},{n:'שי'}],pending:[],
+     sessions:[
+      {id:'r1',dow:2,date:'1.9',week:0,att:{'מאיה':1,'עומר':1},offers:[{by:'ליאת',to:1,from:1,seats:5}],mine:{to:0,from:0,seats:5}},
+      {id:'r2',dow:2,date:'8.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:5},fresh:true},
+     ]},
+    {id:'swim',name:'שחייה',emoji:'🏊',when:'ימי ה׳ · 17:30–19:00',t1:'17:15',t2:'19:00',
+     myKids:[],unmarked:[],
+     members:[{n:'יותם'},{n:'נעמה',adm:1},{n:'גיא'}],pending:[],
+     sessions:[
+      {id:'w1',dow:4,date:'3.9',week:0,att:{'רוני':1,'שירה':1},offers:[],mine:{to:0,from:0,seats:5}},
+     ]},
+  ]
+};
+const WEEKS=[{t:'השבוע',r:'30.8 – 5.9'},{t:'בשבוע הבא',r:'6.9 – 12.9'}];
+let view={screen:'home',actId:null,open:{}};
+
+/* ===================== לוגיקה ===================== */
+const act=()=>state.acts.find(a=>a.id===view.actId);
+const actById=id=>state.acts.find(a=>a.id===id);
+const sess=(aid,sid)=>actById(aid).sessions.find(s=>s.id===sid);
+const pendingCount=()=>state.acts.reduce((n,a)=>n+a.pending.length,0);
+/* משפחות בחוג: {n:שם, adm:מנהל} */
+const memNames=a=>a.members.map(m=>m.n);
+const isMem=(a,n)=>a.members.some(m=>m.n===n);
+const mem=(a,n)=>a.members.find(m=>m.n===n);
+const iAdmin=a=>!!(mem(a,ME)||{}).adm;
+const adminCount=a=>a.members.filter(m=>m.adm).length;
+const admLbl=n=>n===1?'מנהל אחד':n+' מנהלים';
+const famLbl=n=>n===1?'משפחה אחת':n+' משפחות';
+
+function driversFor(s,dir){
+  const l=s.offers.filter(o=>o[dir]).map(o=>({by:o.by,seats:o.seats,mine:false}));
+  if(s.mine[dir]) l.unshift({by:ME,seats:s.mine.seats,mine:true});
+  return l;
+}
+/* מקומות = מושבים פחות הנהג. הילדים של הנהג נכנסים לרכב שלו קודם. */
+function assign(s,dir){
+  const riders=Object.keys(s.att).filter(k=>s.att[k]);
+  const cars=driversFor(s,dir).map(d=>({...d,cap:d.seats-1,pax:[]}));
+  const left=[];
+  riders.forEach(k=>{
+    const own=cars.find(c=>c.by===KIDS[k]&&c.pax.length<c.cap);
+    if(own) own.pax.push(k); else left.push(k);
+  });
+  left.slice().forEach(k=>{
+    const c=cars.find(c=>c.pax.length<c.cap);
+    if(c){c.pax.push(k);left.splice(left.indexOf(k),1);}
+  });
+  return {cars,waiting:left,riders};
+}
+function legStatus(s,dir){
+  const a=assign(s,dir);
+  if(!a.riders.length) return {k:'none',a};
+  if(!a.cars.length)   return {k:'bad',a,msg:'חסרה הסעה'};
+  if(a.waiting.length) return {k:'bad',a,msg:'חסרים '+a.waiting.length+' מקומות'};
+  return {k:'ok',a,msg:a.cars.map(c=>c.mine?'אני':c.by).join(', ')};
+}
+function dayStatus(s){
+  const to=legStatus(s,'to'), fr=legStatus(s,'from');
+  if(s.fresh&&!Object.keys(s.att).length) return {k:'none',txt:'עוד לא סומן',to,fr};
+  const bad=[];
+  if(to.k==='bad') bad.push('הלוך: '+to.msg);
+  if(fr.k==='bad') bad.push('חזור: '+fr.msg);
+  if(bad.length) return {k:'bad',txt:bad.join(' · '),to,fr};
+  if(to.k==='none'&&fr.k==='none') return {k:'none',txt:'אין ילדים רשומים',to,fr};
+  return {k:'ok',txt:'הלוך: '+to.msg+' · חזור: '+fr.msg,to,fr};
+}
+function actStatus(a){
+  const now=a.sessions.filter(s=>s.week===0);
+  const bad=now.filter(s=>dayStatus(s).k==='bad');
+  if(bad.length) return {k:'bad',txt:'חסרה הסעה ל'+bad.map(s=>'יום '+DOWL[s.dow]).join(', ')};
+  const none=now.filter(s=>dayStatus(s).k==='none');
+  if(none.length) return {k:'none',txt:none.length+' ימים עוד לא סומנו'};
+  return {k:'ok',txt:'הכל מסודר השבוע'};
+}
+function nextUp(){
+  for(const a of state.acts) for(const s of a.sessions){
+    if(s.week!==0) continue;
+    const d=dayStatus(s); if(d.k==='none') continue;
+    return {a,s,d};
+  }
+  return null;
+}
+
+/* ===================== תצוגה ===================== */
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const app=document.getElementById('app'), layer=document.getElementById('layer');
+function render(){
+  app.innerHTML = view.screen==='flow'?flowHTML():view.screen==='home'?homeHTML():actHTML();
+}
+
+function homeHTML(){
+  const n=nextUp(); let strip='';
+  if(n){
+    const leg=(st,lbl)=> st.k==='ok'?lbl+': '+esc(st.msg)
+                       : st.k==='none'?lbl+': —'
+                       : '<span class="warn">'+lbl+': '+esc(st.msg)+'</span>';
+    strip=`<div class="nextup"><div class="lbl">הקרוב</div>
+      <div class="main">יום ${DOW[n.s.dow]} ${n.s.date} · ${esc(n.a.name)} · ${n.a.t1}<br>
+      ${leg(n.d.to,'הלוך')} · ${leg(n.d.fr,'חזור')}</div></div>`;
+  }
+  const pc=pendingCount();
+  return `<div class="top"><h1>ההסעות שלי<small>${esc(ME)} · ${state.acts.length} חוגים</small></h1>
+      <button class="iconbtn" data-a="settings">⚙︎${pc?`<span class="bdg">${pc}</span>`:''}</button></div>
+    <div class="demo">הדגמה · נתונים לדוגמה, שום דבר לא נשמר. אתם "יותם", אבא של דני ומאיה.</div>
+    ${strip}
+    ${state.acts.map(a=>{
+      const st=actStatus(a);
+      const who=a.myKids.length?a.myKids.join(', '):'ללא ילד · הסעות בלבד';
+      return `<button class="board" data-a="open" data-i="${a.id}">
+        <span class="em">${a.emoji}</span>
+        <span class="bd"><span class="nm">${esc(a.name)}</span>
+          <span class="sub">${esc(who)} · ${esc(a.when)} · ${famLbl(a.members.length)}</span>
+          <span class="st ${st.k}">${st.k==='bad'?'⚠':st.k==='ok'?'✓':'○'} ${esc(st.txt)}</span>
+        </span></button>`;}).join('')}
+    <button class="addboard" data-a="add">+ ליצור חוג חדש או להצטרף בקישור</button>
+    <div class="note">מוקאפ · הכל אינטראקטיבי, שום דבר לא נשמר</div>`;
+}
+
+function actHTML(){
+  const a=act();
+  let out=`<div class="top"><button class="iconbtn" data-a="back">›</button>
+    <h1>${a.emoji} ${esc(a.name)}<small>${esc(a.when)} · ${famLbl(a.members.length)}</small></h1>
+    <button class="iconbtn" data-a="act-set" data-i="${a.id}">⋮${a.pending.length?`<span class="bdg">${a.pending.length}</span>`:''}</button></div>`;
+  if(a.members.length===1){                    /* חוג טרי — הבעיה היא שאין עם מי להתחלף */
+    const t=`הצטרפו ללוח ההסעות של ${a.name}\n${a.when}\n\n👉 hasaot.app/j/8fk2`;
+    out+=`<div class="lonely"><div class="lt">רק אתם בחוג</div>
+      <div class="ls">אפשר לסמן מתי הילדים מגיעים, אבל בלי עוד משפחות אין עם מי להתחלף.</div>
+      <button data-a="wa" data-t="${encodeURIComponent(t)}">💬 לשלוח את ההזמנה לקבוצה</button></div>`;
+  }
+  WEEKS.forEach((w,i)=>{
+    const ss=a.sessions.filter(s=>s.week===i); if(!ss.length) return;
+    out+=`<div class="week"><b>${w.t}</b><span>${w.r}</span><i></i></div>`+ss.map(s=>dayHTML(a,s)).join('');
+  });
+  return out+`<div class="note">גלילה למטה = השבועות הבאים · לכל ריבוע יש תאריך</div>`;
+}
+
+function dayHTML(a,s){
+  const d=dayStatus(s), open=view.open[s.id], mk=a.myKids;
+  const m=s.mine, driving=!!(m.to||m.from);
+
+  /* --- ימין: הילדים שלי --- */
+  let kidHalf;
+  if(!mk.length){
+    kidHalf=`<div class="half kid"><span class="hcap">הילדים שלי</span>
+      <span class="hval" style="font-size:13px;font-weight:600">אין ילד בחוג</span></div>`;
+  } else if(mk.length===1){
+    const on=!!s.att[mk[0]];
+    kidHalf=`<button class="half kid ${on?'on':''}" data-a="kid" data-i="${a.id}" data-s="${s.id}" data-k="${esc(mk[0])}">
+      <span class="hcap">${esc(mk[0])}</span><span class="sw2 ${on?'on':''}"></span>
+      <span class="hval">${on?'מגיעים':'לא מגיעים'}</span></button>`;
+  } else {
+    const any=mk.some(k=>s.att[k]);
+    kidHalf=`<div class="half kid ${any?'on':''}">
+      <span class="hcap">${any?'מגיעים':'לא מגיעים'}</span>
+      <span class="chips">${mk.map(k=>`<span class="chip ${s.att[k]?'on':''}" data-a="kid"
+        data-i="${a.id}" data-s="${s.id}" data-k="${esc(k)}">${esc(k)}</span>`).join('')}</span></div>`;
+  }
+
+  /* --- שמאל: ימין גדול = און/אוף, שמאל = הלוך מעל חזור --- */
+  const seats=(driving?m.seats-1:state.car.seats-1)+' מקומות';
+  const driveHalf=`<button class="half drive ${driving?'on':''}" data-a="drive" data-i="${a.id}" data-s="${s.id}">
+      <span class="dmain"><span class="sw2 ${driving?'on':''}"></span>
+        <span class="hval">${driving?'מסיעים':'לא מסיעים'}</span>
+        <span class="seatnote">${seats}</span></span>
+      <span class="dlegs">
+        <span class="leg ${m.to?'on':''}"   data-a="leg" data-i="${a.id}" data-s="${s.id}" data-d="to">הלוך</span>
+        <span class="leg ${m.from?'on':''}" data-a="leg" data-i="${a.id}" data-s="${s.id}" data-d="from">חזור</span>
+      </span></button>`;
+
+  return `<div class="day ${open?'open':''}">
+    <div class="dayhead"><span class="dow">יום ${DOW[s.dow]}</span><span class="dt">${s.date}</span>
+      <span class="tm">${a.t1} · ${a.t2}</span>
+      <button class="kebab" data-a="ctx" data-i="${a.id}" data-s="${s.id}">⋮</button></div>
+    <div class="halves">${kidHalf}${driveHalf}</div>
+    <button class="strip ${d.k}" data-a="toggle" data-s="${s.id}">
+      <span class="dot"></span><span class="txt">${esc(d.txt)}</span><span class="chev">▼</span></button>
+    <div class="det">${detailHTML(a,s,d)}</div></div>`;
+}
+
+function detailHTML(a,s,d){
+  const blk=(dir,title,time)=>{
+    const st=dir==='to'?d.to:d.fr, {cars,waiting,riders}=st.a;
+    let h=`<div class="legblock"><div class="legttl">${title} · ${time}</div>`;
+    if(!riders.length) return h+`<div style="font-size:13.5px;color:#9aa3af">אין ילדים רשומים</div></div>`;
+    if(!cars.length) h+=`<div class="empty">⚠ אין הסעה · ${riders.length} ילדים ממתינים</div>`;
+    h+=cars.map(c=>`<div class="car ${c.mine?'mine':''}"><span class="av">${c.mine?'★':esc(c.by[0])}</span>
+      <span class="cinfo"><span class="cnm">${c.mine?'אני':esc(c.by)} <em>· ${c.cap-c.pax.length} מקומות פנויים</em></span>
+      <span class="pax">${c.pax.map(p=>KIDS[p]===ME?`<b>${esc(p)}</b>`:esc(p)).join(' · ')||'—'}</span></span></div>`).join('');
+    if(waiting.length) h+=`<div class="wait">⚠ ללא הסעה: ${waiting.map(esc).join(', ')}</div>`;
+    return h+'</div>';
+  };
+  let h=blk('to','הלוך',a.t1)+blk('from','חזור',a.t2);
+  if(a.unmarked.length) h+=`<div class="unmarked">○ עוד לא סימנו השבוע: ${a.unmarked.map(esc).join(', ')}</div>`;
+  if(d.k==='bad') h+=`<button class="shareb" data-a="share" data-i="${a.id}" data-s="${s.id}">💬 לשתף בקשה בקבוצת הוואטסאפ</button>`;
+  return h;
+}
+
+/* ===================== זרימת הצטרפות =====================
+   שני מסלולים: יצירת חוג, והצטרפות מקישור הזמנה.                          */
+const DATES=[['30.8','31.8','1.9','2.9','3.9','4.9','5.9'],
+             ['6.9','7.9','8.9','9.9','10.9','11.9','12.9']];
+const EMOJIS=['🥋','🤖','🏊','🎨','⚽','🎹','🩰','🎾','🧗','♟️'];
+/* ההזמנה שמדמה נחיתה מקישור */
+const INVITE={by:'דנה כהן',name:'ציור',emoji:'🎨',dow:2,start:'17:00',t2:'18:30',
+  members:[{n:'דנה',adm:1},{n:'תמר'},{n:'אבי'}],kids:{'שירה':'תמר','יובל':'אבי'}};
+
+const minus15=t=>{const[h,m]=t.split(':').map(Number);let x=h*60+m-15;if(x<0)x+=1440;
+  return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');};
+const whenTxt=(days,s,e)=>'ימי '+[...days].sort().map(d=>DOWL[d]).join(' ו־')+' · '+s+'–'+e;
+
+const STEPS={create:['details','kids','invite'], join:['landing','mail','code','kids']};
+const wz=()=>view.wz;
+
+function stepValid(){
+  const w=view.wz, k=STEPS[view.kind][view.step];
+  if(k==='details') return !!(w.name&&w.name.trim()&&w.days.length&&w.start&&w.end);
+  if(k==='mail')    return /.+@.+\..+/.test(w.mail||'');
+  if(k==='code')    return (w.code||'').length===6;
+  return true;
+}
+
+function flowHTML(){
+  const w=view.wz, steps=STEPS[view.kind], k=steps[view.step];
+  const body={details:fDetails,kids:fKids,invite:fInvite,landing:fLanding,mail:fMail,code:fCode}[k](w);
+  const last=view.step===steps.length-1;
+  const cta=k==='landing'?'להצטרף לחוג':last?'סיום':'המשך';
+  return `<div class="top"><button class="iconbtn" data-a="fback">›</button>
+      <h1 style="font-size:16px">${view.kind==='create'?'חוג חדש':'הצטרפות לחוג'}
+      <small>שלב ${view.step+1} מתוך ${steps.length}</small></h1></div>
+    <div class="prog">${steps.map((_,i)=>`<i class="${i<=view.step?'on':''}"></i>`).join('')}</div>
+    ${body}
+    <div class="cta"><button class="${stepValid()?'':'off'}" data-a="fnext">${cta}</button>
+      ${k==='invite'?'<button class="alt" data-a="fnext">אפשר גם אחר כך</button>':''}
+      ${k==='code'?'<button class="alt" data-a="noop">לא הגיע קוד? לשלוח שוב</button>':''}</div>`;
+}
+
+/* --- יצירה --- */
+function fDetails(w){
+  return `<h2 class="fh">איזה חוג?</h2>
+    <p class="fs">אלה הפרטים שכל המשפחות בחוג יראו.</p>
+    <div class="field"><div class="flab">שם החוג</div>
+      <input class="inp" data-f="name" value="${esc(w.name||'')}" placeholder="ג׳ודו, חוג ציור, אימון כדורגל…"></div>
+    <div class="field"><div class="flab">אייקון</div>
+      <div class="pick">${EMOJIS.map(e=>`<span class="pk em ${w.emoji===e?'on':''}" data-a="f-emoji" data-v="${e}">${e}</span>`).join('')}</div></div>
+    <div class="field"><div class="flab">באילו ימים</div>
+      <div class="pick">${[0,1,2,3,4,5].map(d=>`<span class="pk ${w.days.includes(d)?'on':''}" data-a="f-day" data-v="${d}">${DOWL[d]}</span>`).join('')}</div></div>
+    <div class="field"><div class="flab">שעות החוג</div>
+      <div class="two"><input class="inp" type="time" data-f="start" value="${w.start||''}">
+      <input class="inp" type="time" data-f="end" value="${w.end||''}"></div></div>
+    <div class="field"><div class="flab">עד מתי</div>
+      <input class="inp" type="date" data-f="until" value="${w.until||'2027-06-30'}"></div>`;
+}
+function fKids(w){
+  const join=view.kind==='join';
+  return `<h2 class="fh">מי מהילדים ${join?'מצטרף':'הולך לחוג'}?</h2>
+    <p class="fs">${join?'הילדים כבר קיימים במערכת — הם משותפים לכל מי שבמשק הבית.'
+      :'אפשר גם בלי ילד — יש הורים שרק מסיעים.'}</p>
+    <div class="field"><div class="pick">
+      ${state.kids.map(k=>`<span class="pk ${(w.kids||[]).includes(k.name)?'on':''}" data-a="f-kid" data-v="${esc(k.name)}">${esc(k.name)}</span>`).join('')}
+      <span class="pk" data-a="noop">＋ ילד חדש</span></div></div>
+    <div class="field"><div class="flab">כמה מקומות ברכב שלכם</div>
+      <div class="pick">${[4,5,6,7].map(n=>`<span class="pk ${(w.seats||state.car.seats)===n?'on':''}" data-a="f-seats" data-v="${n}">${n}</span>`).join('')}</div>
+      <p class="fs" style="margin:9px 2px 0;font-size:13px">כולל הנהג — כלומר ${(w.seats||state.car.seats)-1} מקומות לילדים.</p></div>
+    ${(w.kids||[]).length?`<button class="row" data-a="f-auto" style="background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;border-bottom:1.5px solid var(--line)">
+      <span class="ic">🔁</span><span class="lb">מגיעים לכל המפגשים<small>ברירת מחדל שאפשר לבטל ביום בודד. בלי זה הלוח יתחיל ריק.</small></span>
+      <span class="sw ${w.auto?'on':''}"></span></button>`:''}`;
+}
+function fInvite(w){
+  const t=`הצטרפו ללוח ההסעות של ${w.name}\n${whenTxt(w.days,w.start,w.end)}\n\n👉 hasaot.app/j/8fk2`;
+  return `<h2 class="fh">מזמינים את שאר ההורים</h2>
+    <p class="fs">בלי עוד משפחות אין עם מי להתחלף. זה הצעד שקובע אם הלוח יעבוד.</p>
+    <div class="inv"><div class="av">${w.emoji||'🏅'}</div>
+      <div class="t"><b>${esc(w.name)}</b><br>${esc(whenTxt(w.days,w.start,w.end))}</div>
+      <div class="meta">hasaot.app/j/8fk2<br>הקישור בתוקף 7 ימים · הצטרפות דורשת אישור</div></div>
+    <button class="shareb" data-a="wa" data-t="${encodeURIComponent(t)}" style="margin:0 0 10px">💬 לשלוח לקבוצת הוואטסאפ</button>
+    <button class="row" data-a="noop" style="background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px">
+      <span class="ic">✉️</span><span class="lb">הזמנה אישית במייל<small>אפשר גם להזמין ישירות כמנהל</small></span><span class="rt">›</span></button>`;
+}
+
+/* --- הצטרפות מקישור --- */
+function fLanding(){
+  const i=INVITE;
+  return `<h2 class="fh">הוזמנתם ללוח הסעות</h2>
+    <p class="fs">רואים מה יש בפנים לפני שמוסרים כתובת מייל.</p>
+    <div class="inv"><div class="av">${i.emoji}</div>
+      <div class="t"><b>${esc(i.by)}</b> מזמינה אתכם ללוח ההסעות של<br><b>חוג ${esc(i.name)}</b></div>
+      <div class="meta">ימי ${DOWL[i.dow]} · ${i.start}–${i.t2}<br>${famLbl(i.members.length)} כבר בחוג</div></div>
+    <p class="fs" style="font-size:13px">בהצטרפות תראו רק את החוג הזה. שאר החוגים של המשפחות האלה לא נחשפים.</p>`;
+}
+function fMail(w){
+  return `<h2 class="fh">כתובת מייל</h2>
+    <p class="fs">נשלח קוד בן 6 ספרות. בלי סיסמה, ובלי מספר טלפון.</p>
+    <div class="field"><input class="inp" type="email" inputmode="email" data-f="mail"
+      value="${esc(w.mail||'')}" placeholder="name@example.com"></div>
+    <p class="fs" style="font-size:13px">אם יש כבר חשבון — פשוט נכנסים אליו, והילדים כבר יהיו שם.</p>`;
+}
+function fCode(w){
+  const c=(w.code||'').padEnd(6,' ');
+  return `<h2 class="fh">הקוד שנשלח</h2>
+    <p class="fs">שלחנו קוד ל־<b>${esc(w.mail||'')}</b>. אחרי האימות הזה המכשיר ייזכר, ולא נבקש שוב.</p>
+    <div class="code">${[0,1,2,3,4,5].map(i=>`<input inputmode="numeric" maxlength="1" data-f="c${i}" value="${c[i].trim()}">`).join('')}</div>
+    <p class="fs" style="text-align:center;margin-top:18px;font-size:13px">בהדגמה — כל 6 ספרות יעבדו.</p>`;
+}
+
+/* --- סיום --- */
+function buildCreated(){
+  const w=view.wz, id='a'+(state.acts.length+1), days=[...w.days].sort();
+  const a={id,name:w.name.trim(),emoji:w.emoji||'🏅',when:whenTxt(days,w.start,w.end),
+    t1:minus15(w.start),t2:w.end,myKids:[...(w.kids||[])],unmarked:[],
+    members:[{n:ME,adm:1}],pending:[],sessions:[],autoAtt:!!w.auto};
+  [0,1].forEach(wk=>days.forEach(d=>{
+    const s={id:id+wk+d,dow:d,date:DATES[wk][d],week:wk,att:{},offers:[],
+             mine:{to:0,from:0,seats:w.seats||state.car.seats},fresh:true};
+    if(w.auto)(w.kids||[]).forEach(k=>{s.att[k]=1;s.fresh=false;});
+    a.sessions.push(s);
+  }));
+  state.acts.push(a);
+  (w.kids||[]).forEach(n=>{const k=state.kids.find(x=>x.name===n); if(k&&!k.acts.includes(id))k.acts.push(id);});
+  if(w.seats) state.car.seats=w.seats;
+  return id;
+}
+function buildJoined(){
+  const w=view.wz, i=INVITE, id='a'+(state.acts.length+1);
+  Object.assign(KIDS,i.kids);
+  const a={id,name:i.name,emoji:i.emoji,when:'ימי '+DOWL[i.dow]+' · '+i.start+'–'+i.t2,
+    t1:minus15(i.start),t2:i.t2,myKids:[...(w.kids||[])],unmarked:['אבי'],
+    members:[...i.members,{n:ME}],pending:[],sessions:[]};
+  [0,1].forEach(wk=>{
+    const s={id:id+wk,dow:i.dow,date:DATES[wk][i.dow],week:wk,att:{'שירה':1,'יובל':1},
+             offers:wk===0?[{by:'דנה',to:1,from:1,seats:5}]:[],
+             mine:{to:0,from:0,seats:w.seats||state.car.seats},fresh:wk===1};
+    (w.kids||[]).forEach(k=>s.att[k]=1);
+    if(wk===1) s.att={};
+    a.sessions.push(s);
+  });
+  state.acts.push(a);
+  (w.kids||[]).forEach(n=>{const k=state.kids.find(x=>x.name===n); if(k&&!k.acts.includes(id))k.acts.push(id);});
+  if(w.seats) state.car.seats=w.seats;
+  return id;
+}
+
+/* ===================== ניווט: מסך + גיליונות + חלוניות =====================
+   מחסנית אחת שמגובה ב-History API, כדי שכפתור החזרה של המכשיר
+   יסגור שכבה אחת במקום לצאת מהאפליקציה.                                   */
+let nav=[];
+const layered=()=>nav.filter(e=>e.type!=='act').length;
+function navGo(e){ nav.push(e); history.pushState({n:nav.length},''); paint(); }
+function navBack(k){ if(nav.length) history.go(-(k||1)); }
+function navReplace(e){ if(nav.length) nav[nav.length-1]=e; else nav.push(e); paint(); }
+function navCloseLayers(){ const n=layered(); if(n) navBack(n); }
+function navReset(e){ nav=[e]; history.replaceState({n:1},''); paint(); }
+function paint(){
+  const top=nav[nav.length-1];
+  if(top && top.type==='flow'){                 /* הזרימה תופסת את כל המסך */
+    view.screen='flow'; view.kind=top.kind; view.step=top.step;
+    render(); layer.innerHTML=''; window.scrollTo(0,0); return;
+  }
+  const a=[...nav].reverse().find(e=>e.type==='act');
+  view.screen = a?'act':'home';
+  if(a) view.actId=a.id;
+  render();
+  if(top && top.type!=='act') top.draw(); else layer.innerHTML='';
+}
+window.addEventListener('popstate',()=>{ nav.pop(); paint(); });
+
+function push(fn){ navGo({type:'sheet',draw:fn}); }
+function pop(){ navBack(1); }
+function close(){ navCloseLayers(); }
+function sheet(title,sub,body){
+  layer.innerHTML=`<div class="scrim" data-a="close"><div class="sheet" data-stop><div class="grab"></div>
+    <div class="sh-top">${layered()>1?'<button class="sh-back" data-a="pop">›</button>':''}
+    <div class="sh-tt"><h3>${title}</h3>${sub?`<div>${sub}</div>`:''}</div></div>${body}</div></div>`;
+}
+function modalHTML(html){ layer.innerHTML=`<div class="scrim center" data-a="close"><div class="modal" data-stop>${html}</div></div>`; }
+/* חלונית חדשה, או החלפת חלונית קיימת בלי להוסיף צעד להיסטוריה */
+function modal(html){
+  const draw=()=>modalHTML(html), top=nav[nav.length-1];
+  if(top && top.type==='modal') navReplace({type:'modal',draw}); else navGo({type:'modal',draw});
+}
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),1900);}
+
+/* ---------- ההגדרות ---------- */
+function sMain(){
+  const pc=pendingCount();
+  sheet('הגדרות', esc(ME)+' · '+esc(MYMAIL), `
+    <button class="row" data-a="s-kids"><span class="ic">🧒</span>
+      <span class="lb">הילדים שלי<small>${state.kids.map(k=>esc(k.name)).join(', ')}</small></span><span class="rt">${state.kids.length} ›</span></button>
+    <button class="row" data-a="s-acts"><span class="ic">🏅</span>
+      <span class="lb">החוגים<small>ימים ושעות, משפחות, הזמנות ואישורים</small></span>
+      ${pc?`<span class="tag warn">${pc} ממתין</span>`:''}<span class="rt">${state.acts.length} ›</span></button>
+    <button class="row" data-a="s-car"><span class="ic">🚗</span>
+      <span class="lb">הרכב שלי<small>${state.car.seats} מקומות · ${state.car.seats-1} לילדים</small></span><span class="rt">›</span></button>
+    <button class="row" data-a="s-acct"><span class="ic">👤</span>
+      <span class="lb">חשבון ומשק בית<small>${state.household.map(h=>esc(h.name)).join(' · ')}</small></span><span class="rt">›</span></button>`);
+}
+function sKids(){
+  sheet('הילדים שלי','משותפים לכל מי שבמשק הבית', state.kids.map(k=>
+    `<button class="row" data-a="s-kid" data-k="${esc(k.name)}"><span class="ic">🧒</span>
+      <span class="lb">${esc(k.name)}<small>${k.acts.length?k.acts.map(i=>esc(actById(i).name)).join(', '):'לא רשום לאף חוג'}</small></span>
+      <span class="rt">${k.acts.length} חוגים ›</span></button>`).join('')+
+    `<button class="row" data-a="noop"><span class="ic">＋</span><span class="lb">הוספת ילד</span><span class="rt">›</span></button>`);
+}
+function sKid(name){
+  const k=state.kids.find(x=>x.name===name);
+  sheet(esc(name),'לאילו חוגים רשום', state.acts.map(a=>{
+    const on=k.acts.includes(a.id);
+    return `<button class="row" data-a="kid-act" data-k="${esc(name)}" data-i="${a.id}"><span class="ic">${a.emoji}</span>
+      <span class="lb">${esc(a.name)}<small>${esc(a.when)} · ${famLbl(a.members.length)}</small></span>
+      <span class="sw ${on?'on':''}"></span></button>`;}).join('')+
+    `<button class="row" data-a="noop"><span class="ic">✏️</span><span class="lb">שינוי שם</span><span class="rt">›</span></button>`);
+}
+function sActs(){
+  sheet('החוגים','כל חוג הוא לוח נפרד — משפחות רואות רק את החוג שהן בו', state.acts.map(a=>
+    `<button class="row" data-a="act-set" data-i="${a.id}"><span class="ic">${a.emoji}</span>
+      <span class="lb">${esc(a.name)}<small>${esc(a.when)} · ${famLbl(a.members.length)}</small></span>
+      ${a.pending.length?`<span class="tag warn">${a.pending.length} ממתין</span>`:''}
+      <span class="tag ${iAdmin(a)?'adm':''}">${iAdmin(a)?'ניהול':'חבר'}</span><span class="rt">›</span></button>`).join('')+
+    `<button class="row" data-a="noop"><span class="ic">＋</span><span class="lb">יצירת חוג / הצטרפות בקישור</span><span class="rt">›</span></button>`);
+}
+function sAct(id){
+  const a=actById(id), adm=iAdmin(a), na=adminCount(a), lastAdmin=adm&&na===1;
+  const pend=a.pending.map((p,i)=>`<div class="pend"><div class="pn">${esc(p.name)}</div>
+    <div class="ps">בקשת הצטרפות · ילד: ${esc(p.kid)} · ${esc(p.mail)}</div>
+    <div class="pb"><button class="yes" data-a="appr" data-i="${id}" data-p="${i}">אישור</button>
+    <button class="no" data-a="rej" data-i="${id}" data-p="${i}">דחייה</button></div></div>`).join('');
+  sheet(a.emoji+' '+esc(a.name), esc(a.when)+' · '+(adm?'בניהול שלי · '+admLbl(na):'חברות בחוג'),
+    (adm&&a.pending.length?`<div class="pendttl">ממתינים לאישור</div>${pend}`:'')+`
+    <button class="row" data-a="noop"><span class="ic">🧒</span>
+      <span class="lb">הילדים שלי בחוג<small>${a.myKids.length?esc(a.myKids.join(', ')):'אין — הסעות בלבד'}</small></span><span class="rt">שינוי ›</span></button>
+    <button class="row" data-a="auto-att" data-i="${id}"><span class="ic">✅</span>
+      <span class="lb">מגיעים כברירת מחדל בכל המפגשים<small>אפשר לבטל מפגש בודד</small></span>
+      <span class="sw ${a.autoAtt?'on':''}"></span></button>
+    <button class="row" data-a="noop"><span class="ic">🚗</span>
+      <span class="lb">ימי הסעה קבועים<small>ימים שבהם אנחנו מסיעים</small></span><span class="rt">לא הוגדר ›</span></button>
+    <button class="row" data-a="noop"><span class="ic">📅</span>
+      <span class="lb">ימים ושעות<small>${esc(a.when)}</small></span><span class="rt">${adm?'שינוי ›':'צפייה ›'}</span></button>
+    <button class="row" data-a="noop"><span class="ic">🔁</span>
+      <span class="lb">חזרתיות<small>כל שבוע · עד 30.6</small></span><span class="rt">${adm?'שינוי ›':'צפייה ›'}</span></button>
+    ${adm?`<button class="row" data-a="noop"><span class="ic">🚫</span>
+      <span class="lb">ביטול מפגש<small>חג, חופשה, ביטול של המדריך</small></span><span class="rt">›</span></button>`:''}
+    <button class="row" data-a="s-mem" data-i="${id}"><span class="ic">👥</span>
+      <span class="lb">המשפחות והמנהלים<small>${esc(memNames(a).join(', '))}</small></span>
+      <span class="tag adm">${admLbl(na)}</span><span class="rt">${a.members.length} ›</span></button>
+    ${adm?`<button class="row" data-a="s-invite" data-i="${id}"><span class="ic">🔗</span>
+      <span class="lb">הזמנת משפחות<small>קישור פתוח או הזמנה אישית — כחבר או כמנהל</small></span><span class="rt">›</span></button>
+    <button class="row" data-a="s-copy" data-i="${id}"><span class="ic">📨</span>
+      <span class="lb">הזמנה מחוג אחר<small>אותן משפחות, בלי לחשוף את החוג האחר</small></span><span class="rt">›</span></button>`:''}
+    <button class="row" data-a="noop"><span class="ic">💬</span>
+      <span class="lb">קבוצת וואטסאפ של החוג<small>לשיתוף סיכומים ובקשות</small></span><span class="rt">הוגדרה ›</span></button>
+    <button class="row" data-a="${lastAdmin?'last-admin':'noop'}" data-i="${id}"><span class="ic">🚪</span>
+      <span class="lb" style="color:var(--bad)">יציאה מהחוג
+      ${lastAdmin?'<small style="color:var(--bad)">אני המנהל היחיד — צריך למנות מנהל אחר קודם</small>':''}</span>
+      <span class="rt">›</span></button>`);
+}
+function sMem(id){
+  const a=actById(id), adm=iAdmin(a);
+  sheet('המשפחות ב'+esc(a.name), famLbl(a.members.length)+' · '+admLbl(adminCount(a))+' · רואות רק את החוג הזה',
+    `<div class="hint">כל חוג הוא רשימה נפרדת. דנה איתי גם ברובוטיקה, מיכל רק כאן, וליאת לא רואה את ג׳ודו בכלל.
+     ${adm?'<br><b>נגיעה על משפחה — למנות אותה כמנהלת או להסיר מהחוג.</b>':''}</div>`+
+    a.members.map(m=>{
+      const also=state.acts.filter(x=>x.id!==id&&isMem(x,m.n)&&isMem(x,ME));
+      const sub=m.n===ME?'החשבון שלי':also.length?'איתי גם ב: '+also.map(x=>esc(x.name)).join(', '):'רק בחוג הזה';
+      return `<${adm?'button':'div'} class="row" ${adm?`data-a="s-member" data-i="${id}" data-m="${esc(m.n)}"`:''}>
+        <span class="ic">${m.adm?'🛡️':'👤'}</span>
+        <span class="lb">${esc(m.n)}${m.n===ME?' <span class="tag">אני</span>':''}<small>${sub}</small></span>
+        ${m.adm?'<span class="tag adm">מנהל</span>':''}${adm?'<span class="rt">›</span>':''}
+        </${adm?'button':'div'}>`;
+    }).join(''));
+}
+function sMember(id,name){
+  const a=actById(id), m=mem(a,name), na=adminCount(a);
+  const lockedLast=m.adm&&na===1;     /* אי אפשר להוריד את המנהל האחרון */
+  sheet(esc(name), esc(a.name)+' · '+(m.adm?'מנהל/ת בחוג':'חבר/ה בחוג'),
+    `<button class="row" data-a="mem-adm" data-i="${id}" data-m="${esc(name)}">
+      <span class="ic">🛡️</span>
+      <span class="lb">מנהל/ת בחוג<small>${lockedLast?'זה המנהל היחיד — צריך למנות עוד אחד לפני שמורידים'
+        :'עריכת ימים ושעות, ביטול מפגשים, הזמנה ואישור משפחות'}</small></span>
+      <span class="sw ${m.adm?'on':''}" style="${lockedLast?'opacity:.45':''}"></span></button>
+    ${name===ME?'':`<button class="row" data-a="mem-del" data-i="${id}" data-m="${esc(name)}">
+      <span class="ic">🚫</span><span class="lb" style="color:var(--bad)">הסרה מהחוג
+      <small>הילדים והנסיעות של ${esc(name)} יוסרו מהלוח</small></span><span class="rt">›</span></button>`}`);
+}
+function sInvite(id){
+  const a=actById(id), r=a.inviteRole||'member';
+  sheet('הזמנת משפחות ל'+esc(a.name),'שתי דרכים — קישור פתוח או הזמנה אישית',
+    `<div class="row"><span class="ic">🔗</span>
+      <span class="lb">קישור פתוח<small>מצטרפים כחברים · פג תוקף אחרי 7 ימים</small></span><span class="rt">העתקה ›</span></div>
+     <div class="row"><span class="ic">🛡️</span>
+      <span class="lb">הצטרפות דורשת אישור<small>אחרת כל מי שמחזיק בקישור נכנס</small></span><span class="sw on"></span></div>
+     <div class="pendttl" style="margin-top:14px">הזמנה אישית</div>
+     <div class="hint">הזמנה לכתובת מייל אחת, לשימוש חד־פעמי. רק ככה אפשר להזמין ישירות כמנהל —
+      קישור שמעניק ניהול ועובר הלאה בוואטסאפ הוא סיכון.</div>
+     <div class="row"><span class="ic">✉️</span>
+      <span class="lb" style="color:#9aa3af">כתובת מייל…</span></div>
+     <div class="row"><span class="ic">👤</span><span class="lb">מצטרפים בתור</span>
+      <span class="chips" style="flex:none">
+        <span class="chip ${r==='member'?'on':''}" data-a="inv-role" data-i="${id}" data-r="member">חבר/ה</span>
+        <span class="chip ${r==='admin'?'on':''}" data-a="inv-role" data-i="${id}" data-r="admin">מנהל/ת</span>
+      </span></div>
+     <button class="row" data-a="noop"><span class="ic">📤</span><span class="lb">שליחת הזמנה</span><span class="rt">›</span></button>`);
+}
+function sCopy(id){
+  const a=actById(id), others=state.acts.filter(x=>x.id!==id);
+  sheet('הזמנה מחוג אחר','בוחרים משפחות מחוג אחר ושולחים להן הזמנה ל'+esc(a.name),
+    `<div class="hint">הן יקבלו הזמנה לחוג הזה בלבד. אין קשר בין החוגים ואף אחד לא רואה חוג שהוא לא בו.</div>`+
+    others.map(o=>memNames(o).filter(m=>m!==ME&&!isMem(a,m)).map(m=>
+      `<div class="row"><span class="ic">👤</span><span class="lb">${esc(m)}<small>מ${esc(o.name)}</small></span>
+       <span class="sw"></span></div>`).join('')).join('')+
+    `<button class="row" data-a="noop"><span class="ic">📤</span><span class="lb">שליחת הזמנות</span><span class="rt">›</span></button>`);
+}
+function sCar(){
+  sheet('הרכב שלי','ברירת מחדל לכל ההסעות שלי בכל החוגים',`
+    <div class="row"><span class="ic">🚗</span><span class="lb">מקומות ברכב<small>כולל הנהג</small></span>
+      <span class="step"><button data-a="seats" data-v="-1">−</button><span>${state.car.seats}</span>
+      <button data-a="seats" data-v="1">+</button></span></div>
+    <div class="row"><span class="ic">👶</span><span class="lb">מקומות לילדים<small>נגזר אוטומטית</small></span>
+      <span class="rt">${state.car.seats-1}</span></div>`);
+}
+function sAcct(){
+  sheet('חשבון ומשק בית','הילדים משותפים לכל מי שבמשק הבית',
+    state.household.map(h=>`<div class="row"><span class="ic">👤</span>
+      <span class="lb">${esc(h.name)}<small>${esc(h.mail)}</small></span>
+      <span class="tag">${h.mail===MYMAIL?'אני':'מקושר'}</span></div>`).join('')+`
+    <button class="row" data-a="noop"><span class="ic">🔗</span>
+      <span class="lb">קישור מייל נוסף<small>בן/בת זוג — הילדים כבר יהיו שם</small></span><span class="rt">›</span></button>
+    <button class="row" data-a="noop"><span class="ic">📱</span>
+      <span class="lb">מכשירים מחוברים<small>אימות בקוד מייל · יציאה מכולם</small></span><span class="rt">2 ›</span></button>`);
+}
+function sCtx(aid,sid){
+  const a=actById(aid), s=sess(aid,sid);
+  sheet('יום '+DOW[s.dow]+' '+s.date, esc(a.name)+' · '+a.t1+'–'+a.t2, `
+    <button class="row" data-a="rec-att" data-i="${aid}" data-s="${sid}"><span class="ic">🔁</span>
+      <span class="lb">מגיעים כל שבוע ביום ${DOWL[s.dow]}<small>יחול גם על השבועות הבאים</small></span>
+      <span class="sw ${s.recAtt?'on':''}"></span></button>
+    <button class="row" data-a="rec-drive" data-i="${aid}" data-s="${sid}"><span class="ic">🚗</span>
+      <span class="lb">מסיעים כל שבוע ביום ${DOWL[s.dow]}<small>יחול גם על השבועות הבאים</small></span>
+      <span class="sw amber ${s.recDrive?'on':''}"></span></button>
+    <button class="row" data-a="self" data-i="${aid}" data-s="${sid}"><span class="ic">🚶</span>
+      <span class="lb">מגיעים, בלי הסעה<small>ביום זה מגיעים עצמאית</small></span>
+      <span class="sw ${s.selfRide?'on':''}"></span></button>
+    <div class="row"><span class="ic">💺</span>
+      <span class="lb">מקומות בנסיעה הזו בלבד<small>אם היום יש פחות מקום ברכב</small></span>
+      <span class="step"><button data-a="dseats" data-i="${aid}" data-s="${sid}" data-v="-1">−</button>
+      <span>${s.mine.seats}</span><button data-a="dseats" data-i="${aid}" data-s="${sid}" data-v="1">+</button></span></div>`);
+}
+
+/* ---------- ביטול הסעה ושיתוף ---------- */
+function waText(a,s,kind){
+  const day='יום '+DOW[s.dow]+' '+s.date;
+  if(kind==='cancel') return `ההסעה ב${day} (${a.name}) בוטלה.\nחסרה הסעה — מי יכול להחליף?\n\n👉 בלוח: hasaot.app/${a.id}`;
+  const d=dayStatus(s), miss=[];
+  if(d.to.k==='bad') miss.push('הלוך '+a.t1+' — '+d.to.msg);
+  if(d.fr.k==='bad') miss.push('חזור '+a.t2+' — '+d.fr.msg);
+  const n=Object.keys(s.att).filter(k=>s.att[k]).length;
+  return `${a.name} · ${day}\n${miss.join('\n')}\n${n} ילדים רשומים.\nמי יכול?\n\n👉 hasaot.app/${a.id}`;
+}
+function shareModal(a,s,kind){
+  const t=waText(a,s,kind);
+  modal(`<h3>${kind==='cancel'?'ההסעה בוטלה':'בקשת הסעה'}</h3>
+    <p>${kind==='cancel'?'הלוח עודכן. כדאי ליידע את הקבוצה כדי שמישהו יספיק להחליף.':'הודעה מוכנה לקבוצת הוואטסאפ של החוג.'}</p>
+    <div class="wa">${esc(t)}</div><div class="btns">
+      <button class="btn s" data-a="close">לא עכשיו</button>
+      <button class="btn g" data-a="wa" data-t="${encodeURIComponent(t)}">שליחה בוואטסאפ</button></div>`);
+}
+function cancelWarn(aid,sid,dirs){
+  const s=sess(aid,sid), pax=new Set();
+  dirs.forEach(d=>{const c=assign(s,d).cars.find(c=>c.mine); if(c) c.pax.forEach(p=>{if(KIDS[p]!==ME) pax.add(p);});});
+  if(!pax.size){ applyDrive(aid,sid,dirs,0); return; }
+  modal(`<h3>⚠ ${pax.size} ילדים משובצים ברכב שלי</h3>
+    <p><b>${[...pax].join(', ')}</b> משובצים ליום ${DOW[s.dow]} ${s.date}. ביטול ישאיר אותם בלי הסעה.</p>
+    <div class="btns"><button class="btn s" data-a="close">להשאיר</button>
+    <button class="btn p" data-a="do-cancel" data-i="${aid}" data-s="${sid}" data-d="${dirs.join(',')}">לבטל בכל זאת</button></div>`);
+}
+function applyDrive(aid,sid,dirs,v){
+  const s=sess(aid,sid); dirs.forEach(d=>s.mine[d]=v);
+  if(v) s.fresh=false;
+  render();
+  /* אם נשארנו בלי הסעה — מחליפים את חלונית האזהרה בהודעת השיתוף */
+  if(!v && !(s.mine.to||s.mine.from)) shareModal(actById(aid),s,'cancel');
+  else { navCloseLayers(); if(v) toast('מסיעים ביום זה'); }
+}
+
+/* ===================== אירועים ===================== */
+/* קלט טקסט: כותבים למצב בלי לצייר מחדש, כדי לא לאבד פוקוס */
+document.addEventListener('input',e=>{
+  const el=e.target.closest('[data-f]'); if(!el||!view.wz) return;
+  const f=el.dataset.f;
+  if(/^c\d$/.test(f)){                       /* תיבות הקוד */
+    const d=(el.value||'').replace(/\D/g,'').slice(0,1); el.value=d;
+    const arr=[...document.querySelectorAll('.code input')];
+    view.wz.code=arr.map(x=>x.value).join('');
+    if(d){ const nx=arr[arr.indexOf(el)+1]; if(nx) nx.focus(); }
+  } else view.wz[f]=el.value;
+  const b=document.querySelector('.cta button'); if(b) b.classList.toggle('off',!stepValid());
+});
+
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-a]'); if(!el) return;
+  const a=el.dataset.a, id=el.dataset.i, sid=el.dataset.s;
+  e.stopPropagation();
+  switch(a){
+    case 'noop': toast('לא ממומש במוקאפ'); return;
+
+    /* --- זרימת הצטרפות --- */
+    case 'add':
+      modal(`<h3>מה עושים?</h3><p>שתי הדרכים להיכנס לחוג — שווה לנסות את שתיהן.</p>
+        <div class="btns" style="flex-direction:column">
+          <button class="btn p" data-a="flow" data-k="create">ליצור חוג חדש</button>
+          <button class="btn s" data-a="flow" data-k="join">לפתוח קישור הזמנה</button>
+        </div>`);
+      return;
+    case 'flow':{
+      const k=el.dataset.k;
+      view.wz = k==='create' ? {days:[],emoji:'',kids:[],seats:state.car.seats,auto:1}
+                             : {kids:[],seats:state.car.seats};
+      navReset({type:'flow',kind:k,step:0}); return;
+    }
+    case 'fback': navBack(1); return;
+    case 'fnext':{
+      if(!stepValid()){ toast('צריך למלא את השדות המסומנים'); return; }
+      const steps=STEPS[view.kind];
+      if(view.step<steps.length-1){ navGo({type:'flow',kind:view.kind,step:view.step+1}); return; }
+      const id = view.kind==='create'?buildCreated():buildJoined();
+      navReset({type:'act',id});
+      toast(view.kind==='create'?'החוג נוצר':'הצטרפתם לחוג'); return;
+    }
+    case 'f-emoji': view.wz.emoji=el.dataset.v; render(); return;
+    case 'f-seats': view.wz.seats=+el.dataset.v; render(); return;
+    case 'f-auto':  view.wz.auto=!view.wz.auto; render(); return;
+    case 'f-day':{
+      const d=+el.dataset.v, i=view.wz.days.indexOf(d);
+      if(i<0) view.wz.days.push(d); else view.wz.days.splice(i,1);
+      render(); return;
+    }
+    case 'f-kid':{
+      const n=el.dataset.v, i=view.wz.kids.indexOf(n);
+      if(i<0) view.wz.kids.push(n); else view.wz.kids.splice(i,1);
+      render(); return;
+    }
+    case 'close': close(); return;
+    case 'pop': pop(); return;
+    case 'back': view.open={}; navBack(1); return;
+    case 'open': view.open={}; navGo({type:'act',id}); return;
+    case 'toggle': view.open[sid]=!view.open[sid]; render(); return;
+
+    /* הגדרות */
+    case 'settings': push(sMain); return;
+    case 's-kids':   push(sKids); return;
+    case 's-kid':    push((k=>()=>sKid(k))(el.dataset.k)); return;
+    case 's-acts':   push(sActs); return;
+    case 's-car':    push(sCar); return;
+    case 's-acct':   push(sAcct); return;
+    case 'act-set':  push((i=>()=>sAct(i))(id)); return;
+    case 's-mem':    push((i=>()=>sMem(i))(id)); return;
+    case 's-copy':   push((i=>()=>sCopy(i))(id)); return;
+    case 's-invite': push((i=>()=>sInvite(i))(id)); return;
+    case 's-member': push(((i,m)=>()=>sMember(i,m))(id,el.dataset.m)); return;
+    case 'inv-role': actById(id).inviteRole=el.dataset.r; sInvite(id); return;
+
+    case 'mem-adm':{
+      const t=actById(id), m=mem(t,el.dataset.m);
+      if(m.adm&&adminCount(t)===1){ toast('צריך למנות מנהל נוסף לפני שמורידים את האחרון'); return; }
+      m.adm=m.adm?0:1; sMember(id,m.n); render();
+      toast(m.adm?m.n+' · מנהל/ת בחוג':m.n+' · חבר/ה בחוג'); return;
+    }
+    case 'mem-del':{
+      const t=actById(id), name=el.dataset.m, m=mem(t,name);
+      if(m.adm&&adminCount(t)===1){ toast('אי אפשר להסיר את המנהל היחיד'); return; }
+      modal(`<h3>להסיר את ${esc(name)} מ${esc(t.name)}?</h3>
+        <p>הילדים והנסיעות של ${esc(name)} יוסרו מהלוח. אפשר להזמין מחדש בכל שלב.</p>
+        <div class="btns"><button class="btn s" data-a="close">ביטול</button>
+        <button class="btn p" data-a="do-del" data-i="${id}" data-m="${esc(name)}">להסיר</button></div>`);
+      return;
+    }
+    case 'do-del':{
+      const t=actById(id), name=el.dataset.m;
+      t.members=t.members.filter(x=>x.n!==name);
+      t.unmarked=t.unmarked.filter(x=>x!==name);
+      t.sessions.forEach(s=>{
+        s.offers=s.offers.filter(o=>o.by!==name);
+        Object.keys(s.att).forEach(k=>{ if(KIDS[k]===name) delete s.att[k]; });
+      });
+      navBack(2); toast(name+' הוסר/ה מהחוג'); return;   /* סוגר את החלונית ואת גיליון המשפחה */
+    }
+    case 'last-admin':
+      toast('צריך למנות מנהל אחר לפני יציאה מהחוג'); return;
+    case 'ctx':      push(((i,x)=>()=>sCtx(i,x))(id,sid)); return;
+
+    case 'kid-act':{
+      const k=state.kids.find(x=>x.name===el.dataset.k), t=actById(id), i=k.acts.indexOf(id);
+      if(i<0){ k.acts.push(id); if(!t.myKids.includes(k.name)) t.myKids.push(k.name); }
+      else { k.acts.splice(i,1); t.myKids=t.myKids.filter(n=>n!==k.name);
+             t.sessions.forEach(s=>delete s.att[k.name]); }
+      sKid(k.name); render(); return;
+    }
+    case 'appr':{
+      const t=actById(id), p=t.pending.splice(+el.dataset.p,1)[0];
+      t.members.push({n:p.name.split(' ')[0]}); sAct(id); render(); toast(p.name+' צורף/ה לחוג'); return;
+    }
+    case 'rej':{
+      const t=actById(id); t.pending.splice(+el.dataset.p,1);
+      sAct(id); render(); toast('הבקשה נדחתה'); return;
+    }
+
+    /* הריבועים */
+    case 'kid':{
+      const s=sess(id,sid), k=el.dataset.k;
+      if(s.att[k]) delete s.att[k]; else s.att[k]=1;
+      s.fresh=false; render(); toast(k+(s.att[k]?' · מגיעים ביום זה':' · לא מגיעים ביום זה')); return;
+    }
+    case 'drive':{
+      const s=sess(id,sid);
+      if(s.mine.to||s.mine.from) cancelWarn(id,sid,['to','from']); else applyDrive(id,sid,['to','from'],1);
+      return;
+    }
+    case 'leg':{
+      const s=sess(id,sid), d=el.dataset.d;
+      if(s.mine[d]) cancelWarn(id,sid,[d]); else applyDrive(id,sid,[d],1);
+      return;
+    }
+    case 'do-cancel': applyDrive(id,sid,el.dataset.d.split(','),0); return;
+    case 'share': shareModal(actById(id),sess(id,sid),'ask'); return;
+    case 'wa':{
+      const w=window.open('https://wa.me/?text='+el.dataset.t,'_blank');
+      close(); if(!w) toast('בהדגמה הקישור לוואטסאפ חסום'); return;
+    }
+
+    /* מספרים ומתגים */
+    case 'seats':
+      state.car.seats=Math.min(9,Math.max(2,state.car.seats+(+el.dataset.v)));
+      state.acts.forEach(x=>x.sessions.forEach(s=>{ if(!s.customSeats) s.mine.seats=state.car.seats; }));
+      sCar(); render(); return;
+    case 'dseats':{
+      const s=sess(id,sid);
+      s.mine.seats=Math.min(9,Math.max(2,s.mine.seats+(+el.dataset.v))); s.customSeats=true;
+      sCtx(id,sid); render(); return;
+    }
+    case 'auto-att':{
+      const t=actById(id); t.autoAtt=!t.autoAtt;
+      if(t.autoAtt) t.sessions.forEach(s=>{ t.myKids.forEach(k=>s.att[k]=1); s.fresh=false; });
+      sAct(id); render(); toast(t.autoAtt?'נרשם לכל המפגשים':'בוטל'); return;
+    }
+    case 'rec-att':{
+      const t=actById(id), s=sess(id,sid); s.recAtt=!s.recAtt;
+      if(s.recAtt) t.sessions.filter(x=>x.dow===s.dow).forEach(x=>{ t.myKids.forEach(k=>x.att[k]=1); x.fresh=false; x.recAtt=1; });
+      sCtx(id,sid); render(); toast(s.recAtt?'יחול על כל יום '+DOWL[s.dow]:'בוטל'); return;
+    }
+    case 'rec-drive':{
+      const t=actById(id), s=sess(id,sid); s.recDrive=!s.recDrive;
+      if(s.recDrive) t.sessions.filter(x=>x.dow===s.dow).forEach(x=>{ x.mine.to=1; x.mine.from=1; x.recDrive=1; });
+      sCtx(id,sid); render(); toast(s.recDrive?'מסיעים כל יום '+DOWL[s.dow]:'בוטל'); return;
+    }
+    case 'self':{ const s=sess(id,sid); s.selfRide=!s.selfRide; sCtx(id,sid); return; }
+  }
+});
+render();
+</script>
+</body>
+</html>
