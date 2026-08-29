@@ -384,12 +384,12 @@ ${loadErr?`<div class="lonely"><div class="lt">שגיאת טעינה</div><div c
           <span class="st ${st.k}">${st.k==='bad'?'⚠':st.k==='ok'?'✓':'○'} ${esc(st.txt)}</span>
         </span></button>`;}).join('')}
     <button class="addboard" data-a="add">+ ליצור חוג חדש או להצטרף בקישור</button>
-    <div class="note">מוקאפ · הכל אינטראקטיבי, שום דבר לא נשמר</div>`;
+`;
 }
 
 function actHTML(){
   const a=act();
-  let out=`<div class="top"><button class="iconbtn" data-a="back">›</button>
+  let out=`<div class="top"><button class="iconbtn" data-a="back">‹</button>
     <h1>${a.emoji} ${esc(a.name)}<small>${esc(a.when)} · ${famLbl(a.members.length)}</small></h1>
     <button class="iconbtn" data-a="act-set" data-i="${a.id}">⋮${a.pending.length?`<span class="bdg">${a.pending.length}</span>`:''}</button></div>`;
   if(a.members.length===1){                    /* חוג טרי — הבעיה היא שאין עם מי להתחלף */
@@ -478,13 +478,15 @@ function detailHTML(a,s,d){
 
 /* ===================== זרימת הצטרפות =====================
    שני מסלולים: יצירת חוג, והצטרפות מקישור הזמנה.                          */
-const EMOJIS=['🥋','🤖','🏊','🎨','⚽','🎹','🩰','🎾','🧗','♟️'];
+const EMOJIS=['🏀','⚽','🎾','🏐','🏊','🤸','🥋','🩰','🎹','🎨','🧮','📚','🤖','🧗','♟️'];
 /* ההזמנה שמדמה נחיתה מקישור */
 const INVITE={by:'',name:'',emoji:'🔗',dow:0,start:'',t2:'',members:[],kids:{}};
 
 const minusMin=(t,n)=>{const[h,m]=t.split(':').map(Number);let x=h*60+m-n;if(x<0)x+=1440;
   return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');};
 const minus15=t=>minusMin(t,15);
+const plusMin =(t,n)=>{const[h,m]=t.split(':').map(Number);let x=(h*60+m+n)%1440;
+  return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');};
 const whenTxt=(days,s,e)=>{
   const d=[...days].sort().map(x=>DOWL[x]);
   const list=d.length===1?d[0]:d.slice(0,-1).join(', ')+' ו־'+d[d.length-1];
@@ -509,7 +511,7 @@ function flowHTML(){
               landing:fLanding,mail:fMail,code:fCode}[k](w);
   const last=view.step===steps.length-1;
   const cta=k==='landing'?'להצטרף לחוג':last?'סיום':'המשך';
-  return `<div class="top"><button class="iconbtn" data-a="fback">›</button>
+  return `<div class="top"><button class="iconbtn" data-a="fback">‹</button>
       <h1 style="font-size:16px">${view.kind==='create'?'חוג חדש':'הצטרפות לחוג'}
       <small>שלב ${view.step+1} מתוך ${steps.length}</small></h1></div>
     <div class="prog">${steps.map((_,i)=>`<i class="${i<=view.step?'on':''}"></i>`).join('')}</div>
@@ -535,7 +537,7 @@ function fDetails(w){
 `;
 }
 function fWhere(w){
-  const other = w.placeMode==='fixed' && w.place && !PLACES.includes(w.place);
+  const other = !!w.placeOther;
   const lead  = w.lead ?? 15;
   return `<h2 class="fh">איפה ומתי אוספים?</h2>
     <p class="fs">אלה הפרטים שקובעים לאן ולמתי נוסעים.</p>
@@ -570,7 +572,7 @@ function fKids(w){
       :'אפשר גם בלי ילד — יש הורים שרק מסיעים.'}</p>
     <div class="field"><div class="pick">
       ${state.kids.map(k=>`<span class="pk ${(w.kids||[]).includes(k.name)?'on':''}" data-a="f-kid" data-v="${esc(k.name)}">${esc(k.name)}</span>`).join('')}
-      <span class="pk" data-a="noop">＋ ילד חדש</span></div></div>
+      <span class="pk" data-a="add-kid">＋ ילד חדש</span></div></div>
     <div class="field"><div class="flab">מקומות פנויים ברכב שלכם</div>
       <div class="pick">${[1,2,3,4,5,6].map(n=>`<span class="pk ${(w.seats||state.car.seats)===n?'on':''}" data-a="f-seats" data-v="${n}">${n}</span>`).join('')}</div>
       <p class="fs" style="margin:9px 2px 0;font-size:13px">בנוסף לילדים שלכם — כלומר כמה ילדים <b>אחרים</b> אפשר לקחת.</p></div>
@@ -830,7 +832,13 @@ async function boot(){
   if(!session){ view.screen='auth'; render(); return; }
   view.screen='loading'; render();
   try { await loadState(); loadErr=''; }
-  catch(e){ loadErr = e.message||String(e); }
+  catch(e){
+    if(/JWT|jwt/.test(e.message||'')){       /* פער שעונים — טוקן טרי ונסיון נוסף */
+      try { await sb.auth.refreshSession(); await new Promise(r=>setTimeout(r,1200));
+            await loadState(); loadErr=''; }
+      catch(e2){ loadErr = e2.message||String(e2); }
+    } else loadErr = e.message||String(e);
+  }
   nav=[]; view.screen='home'; render();
 }
 
@@ -868,7 +876,7 @@ function pop(){ navBack(1); }
 function close(){ navCloseLayers(); }
 function sheet(title,sub,body){
   layer.innerHTML=`<div class="scrim" data-a="close"><div class="sheet" data-stop><div class="grab"></div>
-    <div class="sh-top">${layered()>1?'<button class="sh-back" data-a="pop">›</button>':''}
+    <div class="sh-top">${layered()>1?'<button class="sh-back" data-a="pop">‹</button>':''}
     <div class="sh-tt"><h3>${title}</h3>${sub?`<div>${sub}</div>`:''}</div></div>${body}</div></div>`;
 }
 function modalHTML(html){ layer.innerHTML=`<div class="scrim center" data-a="close"><div class="modal" data-stop>${html}</div></div>`; }
@@ -882,7 +890,7 @@ function toast(t){const e=document.createElement('div');e.className='toast';e.te
 /* ---------- ההגדרות ---------- */
 function sMain(){
   const pc=pendingCount();
-  sheet('הגדרות', esc(ME)+' · '+esc(MYMAIL), `
+  sheet('הגדרות', esc(state.household[0]?.mail||''), `
     <button class="row" data-a="s-kids"><span class="ic">🧒</span>
       <span class="lb">הילדים שלי<small>${state.kids.map(k=>esc(k.name)).join(', ')}</small></span><span class="rt">${state.kids.length} ›</span></button>
     <button class="row" data-a="s-acts"><span class="ic">🏅</span>
@@ -900,7 +908,7 @@ function sKids(){
     `<button class="row" data-a="s-kid" data-k="${esc(k.name)}"><span class="ic">🧒</span>
       <span class="lb">${esc(k.name)}<small>${k.acts.length?k.acts.map(i=>esc(actById(i).name)).join(', '):'לא רשום לאף חוג'}</small></span>
       <span class="rt">${k.acts.length} חוגים ›</span></button>`).join('')+
-    `<button class="row" data-a="noop"><span class="ic">＋</span><span class="lb">הוספת ילד</span><span class="rt">›</span></button>`);
+    `<button class="row" data-a="add-kid"><span class="ic">＋</span><span class="lb">הוספת ילד</span><span class="rt">›</span></button>`);
 }
 function sKid(name){
   const k=state.kids.find(x=>x.name===name);
@@ -960,7 +968,7 @@ function sAct(id){
       <span class="rt">›</span></button>`);
 }
 function sPlaceDef(id){
-  const a=actById(id), cur=view.ed.place, other=cur&&!PLACES.includes(cur);
+  const a=actById(id), cur=view.ed.place, other=!!view.ed.placeOther;
   sheet('מיקום קבוע · '+esc(a.name),'ברירת המחדל לכל המפגשים',
     `<div class="field"><div class="pick">${PLACES.map(pl=>
       `<span class="pk ${cur===pl?'on':''}" data-a="pd-pick" data-i="${id}" data-v="${esc(pl)}">${esc(pl)}</span>`).join('')}
@@ -975,7 +983,7 @@ function sPlaceDef(id){
    יום, שעה, מיקום — וכל שינוי מסומן על הריבוע כדי שאף אחד לא יפספס. */
 function sEdit(aid,sid){
   const a=actById(aid), s=sess(aid,sid), e=view.ed;
-  const other=e.place&&!PLACES.includes(e.place);
+  const other=!!e.placeOther;
   sheet('עריכת המפגש', 'יום '+DOW[s.dow]+' '+s.date+' · '+esc(a.name),
     `<div class="field"><div class="flab">תאריך</div>
       <input class="inp" type="date" data-f="edDate" value="${e.date||''}">
@@ -1032,6 +1040,15 @@ function sExtra(id){
        דרך ⋮ שעל הריבוע.</div>
      <button class="row" data-a="ex-add" data-i="${id}" style="background:var(--kid);color:#fff;
        border-radius:14px;padding:15px;justify-content:center;font-weight:800">הוספה ללוח</button>`);
+}
+
+/* הוספת ילד — משותף למשק הבית */
+function sAddKid(){
+  sheet('הוספת ילד','הילד יהיה משותף לכל מי שבמשק הבית',
+    `<div class="field"><div class="flab">שם הילד</div>
+      <input class="inp" data-f="kidName" value="${esc(view.newKid||'')}" placeholder="השם שיופיע בלוח"></div>
+     <button class="row" data-a="kid-save" style="background:var(--kid);color:#fff;border-radius:14px;
+       padding:15px;justify-content:center;font-weight:800">הוספה</button>`);
 }
 
 function sMem(id){
@@ -1104,7 +1121,7 @@ function sAcct(){
   sheet('חשבון ומשק בית','הילדים משותפים לכל מי שבמשק הבית',
     state.household.map(h=>`<div class="row"><span class="ic">👤</span>
       <span class="lb">${esc(h.name)}<small>${esc(h.mail)}</small></span>
-      <span class="tag">${h.mail===MYMAIL?'אני':'מקושר'}</span></div>`).join('')+`
+      <span class="tag">${h.mail===state.household[0]?.mail?'אני':'מקושר'}</span></div>`).join('')+`
     <button class="row" data-a="noop"><span class="ic">🔗</span>
       <span class="lb">קישור מייל נוסף<small>בן/בת זוג — הילדים כבר יהיו שם</small></span><span class="rt">›</span></button>
     <button class="row" data-a="noop"><span class="ic">📱</span>
@@ -1187,6 +1204,23 @@ function applyDrive(aid,sid,dirs,v){
   else { navCloseLayers(); if(v) toast('מסיעים ביום זה'); }
 }
 
+async function saveKid(){
+  const n=(view.newKid||'').trim();
+  if(!n) { toast('צריך שם'); return; }
+  if(state.kids.some(k=>k.name===n)) { toast('כבר יש ילד בשם הזה'); return; }
+  try{
+    const {data:hh} = await sb.from('household_members').select('household_id').limit(1).single();
+    const {error} = await sb.from('kids').insert({name:n, household_id:hh.household_id});
+    if(error) throw error;
+    /* אם מוסיפים מתוך האשף — לצרף אותו מיד לבחירה */
+    await loadState();
+    if(view.wz && view.screen==='flow'){
+      view.wz.kids = [...(view.wz.kids||[]), n];
+    }
+    pop(); toast(n+' נוסף');
+  }catch(e){ toast('נכשל: '+(e.message||e)); }
+}
+
 
 /* יצירת חוג אמיתית — פונקציה אחת בשרת שיוצרת, מצרפת כמנהל ומייצרת מפגשים */
 async function finishFlow(){
@@ -1219,6 +1253,19 @@ async function finishFlow(){
 
 /* ===================== אירועים ===================== */
 /* קלט טקסט: כותבים למצב בלי לצייר מחדש, כדי לא לאבד פוקוס */
+/* הדבקה של קוד שלם לתוך תיבות הספרות */
+document.addEventListener('paste',e=>{
+  const box=e.target.closest('.code input'); if(!box) return;
+  const txt=(e.clipboardData||window.clipboardData).getData('text')||'';
+  const d=txt.replace(/\D/g,''); if(!d) return;
+  e.preventDefault();
+  const arr=[...document.querySelectorAll('.code input')];
+  let i=arr.indexOf(box);
+  for(const ch of d){ if(i>=arr.length) break; arr[i].value=ch; i++; }
+  arr[Math.min(i,arr.length-1)].focus();
+  arr[0].dispatchEvent(new Event('input',{bubbles:true}));
+});
+
 document.addEventListener('input',e=>{
   const el=e.target.closest('[data-f]'); if(!el) return;
   const f=el.dataset.f;
@@ -1230,12 +1277,23 @@ document.addEventListener('input',e=>{
     if(el.value){ const nx=arr[arr.indexOf(el)+1]; if(nx) nx.focus(); }
     return;
   }
-  if(f==='wzPlace'){ (view.wz=view.wz||{}).place=el.value; return; }
+  if(f==='wzPlace'){
+    (view.wz=view.wz||{}).place=el.value;
+    const b=document.querySelector('.cta button'); if(b) b.classList.toggle('off',!stepValid());
+    return;
+  }
+  if(f==='kidName'){ view.newKid=el.value; return; }
   if(f.startsWith('ed')||f==='exDate'){
     const map={edStart:'start',edEnd:'end',edDate:'date',edPlace:'place',edNote:'note'};
     (view.ed=view.ed||{})[map[f]||f]=el.value; return;
   }
   if(!view.wz) return;
+  if(f==='start'&&el.value){                 /* סיום נגרר שעה אחרי ההתחלה */
+    view.wz.start=el.value; view.wz.end=plusMin(el.value,60);
+    const e2=document.querySelector('[data-f=end]'); if(e2) e2.value=view.wz.end;
+    const b=document.querySelector('.cta button'); if(b) b.classList.toggle('off',!stepValid());
+    return;
+  }
   if(/^c\d$/.test(f)){                       /* תיבות הקוד */
     const d=(el.value||'').replace(/\D/g,'').slice(0,1); el.value=d;
     const arr=[...document.querySelectorAll('.code input')];
@@ -1254,6 +1312,8 @@ document.addEventListener('click',e=>{
     case 'auth-go':   authGo(); return;
     case 'auth-back': auth.step='mail'; auth.code=''; auth.err=''; render(); return;
     case 'logout':    sb.auth.signOut().then(()=>{ auth={step:'mail',mail:'',code:'',busy:false,err:''}; nav=[]; view.screen='auth'; render(); }); return;
+    case 'add-kid': view.newKid=''; push(sAddKid); return;
+    case 'kid-save': saveKid(); return;
 
     /* --- זרימת הצטרפות --- */
     case 'add':
@@ -1265,7 +1325,8 @@ document.addEventListener('click',e=>{
       return;
     case 'flow':{
       const k=el.dataset.k;
-      view.wz = k==='create' ? {days:[],emoji:'',kids:[],seats:state.car.seats,auto:1,lead:15}
+      view.wz = k==='create' ? {days:[],emoji:'',kids:[],seats:state.car.seats,auto:1,lead:15,
+                                start:'16:00',end:'17:00'}
                              : {kids:[],seats:state.car.seats};
       navReset({type:'flow',kind:k,step:0}); return;
     }
@@ -1281,9 +1342,12 @@ document.addEventListener('click',e=>{
     case 'f-lead':  view.wz.lead=+el.dataset.v; render(); return;
     case 'f-place':{
       const v=el.dataset.v;
-      if(v==='__varies'){ view.wz.placeMode='varies'; view.wz.place=''; }
-      else { view.wz.placeMode='fixed'; view.wz.place = v==='__other' ? '' : v; }
-      render(); return;
+      if(v==='__varies'){ Object.assign(view.wz,{placeMode:'varies',place:'',placeOther:0}); }
+      else if(v==='__other'){ Object.assign(view.wz,{placeMode:'fixed',place:'',placeOther:1}); }
+      else { Object.assign(view.wz,{placeMode:'fixed',place:v,placeOther:0}); }
+      render();
+      if(view.wz.placeOther) document.querySelector('[data-f=wzPlace]')?.focus();
+      return;
     }
     case 'f-auto':  view.wz.auto=!view.wz.auto; render(); return;
     case 'f-day':{
@@ -1400,7 +1464,14 @@ document.addEventListener('click',e=>{
       view.ed={days:[...actById(id).weekdays],start:actById(id).start,end:actById(id).t2};
       push((i=>()=>sDays(i))(id)); return;
     case 's-place': view.ed={place:actById(id).place||''}; push((i=>()=>sPlaceDef(i))(id)); return;
-    case 'pd-pick': view.ed.place = el.dataset.v==='__other'?'':el.dataset.v; sPlaceDef(id); return;
+    case 'pd-pick':{
+      const v=el.dataset.v;
+      view.ed.placeOther = v==='__other'?1:0;
+      view.ed.place = v==='__other'?'':v;
+      sPlaceDef(id);
+      if(view.ed.placeOther) document.querySelector('[data-f=edPlace]')?.focus();
+      return;
+    }
     case 'pd-save': actById(id).place=view.ed.place||''; pop(); toast('המיקום עודכן'); return;
     case 's-extra': view.ed={}; push((i=>()=>sExtra(i))(id)); return;
     case 's-edit':{
@@ -1413,8 +1484,12 @@ document.addEventListener('click',e=>{
       push(((i,j)=>()=>sEdit(i,j))(id,sid)); return;
     }
     case 'ed-place':
-      view.ed.place = el.dataset.v==='__other' ? '' : el.dataset.v;
-      sEdit(id, sid); return;
+      const v=el.dataset.v;
+      view.ed.placeOther = v==='__other' ? 1 : 0;
+      view.ed.place = v==='__other' ? '' : v;
+      sEdit(id, sid);
+      if(view.ed.placeOther) document.querySelector('[data-f=edPlace]')?.focus();
+      return;
     case 'ed-sess-save':{
       const a=actById(id), x=sess(id,sid), e=view.ed;
       if(!e.start||!e.end||e.end<=e.start){ toast('שעת הסיום צריכה להיות אחרי ההתחלה'); return; }
