@@ -1222,6 +1222,15 @@ async function finishFlow(){
 document.addEventListener('input',e=>{
   const el=e.target.closest('[data-f]'); if(!el) return;
   const f=el.dataset.f;
+  if(f==='authMail'){ auth.mail=el.value; return; }
+  if(/^ac\d$/.test(f)){
+    const arr=[...document.querySelectorAll('.code input')];
+    el.value=(el.value||'').replace(/\D/g,'').slice(0,1);
+    auth.code=arr.map(x=>x.value).join('');
+    if(el.value){ const nx=arr[arr.indexOf(el)+1]; if(nx) nx.focus(); }
+    return;
+  }
+  if(f==='wzPlace'){ (view.wz=view.wz||{}).place=el.value; return; }
   if(f.startsWith('ed')||f==='exDate'){
     const map={edStart:'start',edEnd:'end',edDate:'date',edPlace:'place',edNote:'note'};
     (view.ed=view.ed||{})[map[f]||f]=el.value; return;
