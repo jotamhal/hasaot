@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>בדיקת התחברות · לוח ההסעות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;direction:rtl;background:#eef1f5;color:#111827;
+  font-family:"Heebo",system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+main{max-width:420px;margin:0 auto;padding:28px 16px calc(28px + env(safe-area-inset-bottom))}
+h1{font-size:21px;font-weight:800;margin:0 0 6px}
+.sub{font-size:14px;color:#6b7280;margin:0 0 22px;line-height:1.6}
+.card{background:#fff;border:1px solid #e3e7ee;border-radius:18px;padding:18px;margin-bottom:14px}
+label{display:block;font-size:12.5px;font-weight:800;color:#6b7280;margin:0 2px 7px}
+input{width:100%;background:#fff;border:1.5px solid #e3e7ee;border-radius:13px;padding:13px 14px;
+  font:inherit;font-size:16px;font-weight:600;color:#111827}
+input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px #dbeafe}
+button{width:100%;background:#2563eb;color:#fff;border:0;border-radius:14px;padding:15px;
+  font:inherit;font-size:16px;font-weight:800;margin-top:12px;cursor:pointer}
+button:disabled{background:#c8cfda;cursor:default}
+button.ghost{background:#f1f3f7;color:#374151;font-size:14px;padding:12px}
+.code{display:flex;gap:8px;direction:ltr;justify-content:center;margin-top:4px}
+.code input{width:44px;height:54px;text-align:center;font-size:22px;font-weight:800;padding:0}
+.msg{border-radius:13px;padding:12px 14px;font-size:14px;line-height:1.6;margin-top:12px;font-weight:600}
+.ok{background:#e6f4ea;color:#14532d;border:1px solid #b7e0c4}
+.bad{background:#fdeaea;color:#7f1d1d;border:1px solid #f4c2c2}
+.info{background:#eef1f6;color:#374151}
+pre{background:#f8fafc;border:1px solid #e3e7ee;border-radius:12px;padding:12px;font-size:12px;
+  overflow-x:auto;direction:ltr;text-align:left;margin:12px 0 0;white-space:pre-wrap;word-break:break-all}
+.steps{font-size:12.5px;color:#9aa3af;line-height:1.7;margin-top:18px}
+</style>
+</head>
+<body>
+<main>
+  <h1>בדיקת התחברות</h1>
+  <p class="sub">בודק את כל השרשרת: Supabase שולח → Brevo מעביר → הקוד מגיע לתיבה שלך.
+     זה לא האפליקציה, רק בדיקה.</p>
+
+  <div class="card" id="step-mail">
+    <label for="mail">כתובת מייל</label>
+    <input id="mail" type="email" inputmode="email" placeholder="name@example.com" autocomplete="email">
+    <button id="send">שליחת קוד</button>
+  </div>
+
+  <div class="card" id="step-code" hidden>
+    <label>הקוד שהגיע במייל</label>
+    <div class="code">
+      <input inputmode="numeric" maxlength="1"><input inputmode="numeric" maxlength="1">
+      <input inputmode="numeric" maxlength="1"><input inputmode="numeric" maxlength="1">
+      <input inputmode="numeric" maxlength="1"><input inputmode="numeric" maxlength="1">
+    </div>
+    <button id="verify">אימות</button>
+    <button id="again" class="ghost">לשלוח שוב</button>
+  </div>
+
+  <div id="msg"></div>
+
+  <div class="steps">
+    אם הקוד לא מגיע — לבדוק בספאם, ואז ב־Brevo תחת <b>Transactional → Logs</b>
+    אם השליחה בכלל יצאה.
+  </div>
+</main>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const URL = 'https://jdsctohcgoytxplzrqhc.supabase.co';
+const KEY = 'sb_publishable_Yqg8uZ85qBcJWao091V4Ww_UPYVgMrX';
+const sb  = createClient(URL, KEY);
+
+const $ = s => document.querySelector(s);
+const msg = (text, kind='info') => $('#msg').innerHTML =
+  `<div class="msg ${kind}">${text}</div>`;
+const digits = () => [...document.querySelectorAll('.code input')].map(i => i.value).join('');
+
+/* קפיצה אוטומטית בין תיבות הקוד */
+document.querySelectorAll('.code input').forEach((el, i, all) => {
+  el.addEventListener('input', () => {
+    el.value = el.value.replace(/\D/g, '').slice(0, 1);
+    if (el.value && all[i + 1]) all[i + 1].focus();
+  });
+});
+
+async function send() {
+  const email = $('#mail').value.trim();
+  if (!/.+@.+\..+/.test(email)) return msg('כתובת מייל לא תקינה', 'bad');
+  $('#send').disabled = true;
+  msg('שולח…');
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  $('#send').disabled = false;
+  if (error) return msg('נכשל: ' + error.message + '<pre>' + JSON.stringify(error, null, 2) + '</pre>', 'bad');
+  $('#step-code').hidden = false;
+  document.querySelector('.code input').focus();
+  msg('נשלח ל־' + email + '. הקוד תקף לשעה.', 'ok');
+}
+
+async function verify() {
+  const email = $('#mail').value.trim(), token = digits();
+  if (token.length !== 6) return msg('צריך 6 ספרות', 'bad');
+  $('#verify').disabled = true;
+  msg('מאמת…');
+  const { data, error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  $('#verify').disabled = false;
+  if (error) return msg('נכשל: ' + error.message, 'bad');
+
+  /* אם ההתחברות עבדה — הטריגר אמור היה ליצור פרופיל ומשק בית */
+  const { data: prof, error: pe } = await sb.from('profiles')
+    .select('id, name, seats').eq('id', data.user.id).single();
+  const { data: hh } = await sb.from('household_members').select('household_id');
+
+  msg('מחובר ✓<pre>' +
+      'user id: ' + data.user.id + '\n' +
+      'email:   ' + data.user.email + '\n' +
+      'profile: ' + (pe ? '⚠ ' + pe.message : JSON.stringify(prof)) + '\n' +
+      'משק בית: ' + (hh?.length ? hh.length + ' ✓' : '⚠ לא נוצר') +
+      '</pre>', 'ok');
+}
+
+$('#send').onclick   = send;
+$('#again').onclick  = send;
+$('#verify').onclick = verify;
+
+/* אם כבר מחוברים מסשן קודם — להראות את זה */
+sb.auth.getSession().then(({ data }) => {
+  if (data.session) msg('כבר מחובר בתור ' + data.session.user.email +
+    ' — המכשיר נזכר. <br>אפשר לבדוק שוב עם כתובת אחרת.', 'ok');
+});
+</script>
+</body>
+</html>
