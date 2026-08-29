@@ -64,6 +64,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .dh1{display:flex;align-items:center;gap:7px}
 .dh2{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.45}
 .dh2 b{font-weight:800;color:#4b5563}
+.dh2 b.nop{color:var(--bad)}
 .dayhead .dow{font-size:16px;font-weight:800}
 .dayhead .dt{font-size:15px;font-weight:700;color:var(--muted);flex:1}
 .day.off{opacity:.62}
@@ -254,7 +255,7 @@ const sT1   =(a,s)=>minus15(sStart(a,s));
 const sT2   =(a,s)=>s.end||a.t2;
 const sPlace=(a,s)=>s.place||a.place;
 const changed=(a,s)=>[s.origDate&&'הועבר', (s.start||s.end)&&'שעה שונה',
-                      s.place&&s.place!==a.place&&'מיקום אחר'].filter(Boolean);
+                      false].filter(Boolean);
 
 /* כל חוג הוא לוח בפני עצמו: רשימת משפחות משלו, הזמנה משלו, אישורים משלו. */
 const state={
@@ -262,21 +263,21 @@ const state={
   household:[{name:ME,mail:MYMAIL},{name:'אורנה',mail:'orna@…'}],
   kids:[{name:'דני',acts:['ball']},{name:'מאיה',acts:['robo']}],
   acts:[
-    {id:'ball',name:'כדורסל',emoji:'🏀',weekdays:[1,2,4,5],start:'16:30',place:'רגבה',
+    {id:'ball',name:'כדורסל',emoji:'🏀',weekdays:[1,2,4,5],start:'16:30',place:'',
      when:'ימי ב׳, ג׳, ה׳ ו־ו׳ · 16:30–18:00',t1:'16:15',t2:'18:00',
      myKids:['דני'],unmarked:['רותם'],
      members:[{n:'יותם',adm:1},{n:'דנה'},{n:'אורי',adm:1},{n:'מיכל'},{n:'רותם'}],
      pending:[{name:'יעל לוי',kid:'עידו',mail:'yael@…'}],
      sessions:[
-      {id:'b01',dow:1,date:'31.8',week:0,att:{'דני':1,'נועה':1,'איתי':1},
+      {id:'b01',dow:1,date:'31.8',week:0,place:'רגבה',att:{'דני':1,'נועה':1,'איתי':1},
        offers:[{by:'דנה',to:1,from:1,seats:3}],mine:{to:0,from:0,seats:3}},
-      {id:'b02',dow:2,date:'1.9',week:0,att:{'דני':1,'נועה':1,'איתי':1,'שירה':1},
+      {id:'b02',dow:2,date:'1.9',week:0,place:'בית העמק',att:{'דני':1,'נועה':1,'איתי':1,'שירה':1},
        offers:[{by:'מיכל',to:1,from:0,seats:3}],mine:{to:0,from:0,seats:3}},
       {id:'b03',dow:4,date:'3.9',week:0,place:'עברון',start:'17:30',end:'19:00',
        note:'משחק ליגה מול עכו',att:{'דני':1,'נועה':1,'איתי':1,'שירה':1,'רוני':1},
        offers:[{by:'אורי',to:1,from:1,seats:2}],mine:{to:0,from:0,seats:3}},
       {id:'b04',dow:5,date:'4.9',week:0,cancelled:'חופשת סוכות',att:{},offers:[],mine:{to:0,from:0,seats:3},fresh:true},
-      {id:'b05',dow:1,date:'7.9',week:1,att:{'דני':1,'נועה':1,'רוני':1},offers:[],mine:{to:1,from:1,seats:3}},
+      {id:'b05',dow:1,date:'7.9',week:1,place:'עברון',att:{'דני':1,'נועה':1,'רוני':1},offers:[],mine:{to:1,from:1,seats:3}},
       {id:'b06',dow:2,date:'8.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:3},fresh:true},
       {id:'b07',dow:4,date:'10.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:3},fresh:true},
       {id:'b08',dow:5,date:'11.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:3},fresh:true},
@@ -349,6 +350,8 @@ function dayStatus(s){
 }
 function actStatus(a){
   const now=a.sessions.filter(s=>s.week===0);
+  const noPlace=now.filter(s=>!s.cancelled&&!sPlace(a,s));
+  if(noPlace.length) return {k:'bad',txt:'מיקום לא נקבע ל'+noPlace.map(s=>'יום '+DOWL[s.dow]).join(', ')};
   const bad=now.filter(s=>dayStatus(s).k==='bad');
   if(bad.length) return {k:'bad',txt:'חסרה הסעה ל'+bad.map(s=>'יום '+DOWL[s.dow]).join(', ')};
   const none=now.filter(s=>dayStatus(s).k==='none');
@@ -455,7 +458,8 @@ function dayHTML(a,s){
   const head=`<div class="dayhead">
       <div class="dh1"><span class="dow">יום ${DOW[s.dow]}</span><span class="dt">${s.date}</span>${marks}
         <button class="kebab" data-a="ctx" data-i="${a.id}" data-s="${s.id}">⋮</button></div>
-      <div class="dh2">${sT1(a,s)} · ${sT2(a,s)} · <b>${esc(sPlace(a,s))}</b>
+      <div class="dh2">${sT1(a,s)} · ${sT2(a,s)} · ${sPlace(a,s) ? `<b>${esc(sPlace(a,s))}</b>`
+        : s.cancelled ? '—' : '<b class="nop">⚠ מיקום לא נקבע</b>'}
         ${s.note?` · ${esc(s.note)}`:''}</div></div>`;
 
   if(s.cancelled) return `<div class="day off">${head}
@@ -730,7 +734,7 @@ function sAct(id){
     <button class="row" data-a="noop"><span class="ic">🚗</span>
       <span class="lb">ימי הסעה קבועים<small>ימים שבהם אנחנו מסיעים</small></span><span class="rt">לא הוגדר ›</span></button>
     <button class="row" data-a="s-place" data-i="${id}"><span class="ic">📍</span>
-      <span class="lb">מיקום קבוע<small>${esc(a.place||'לא הוגדר')} · מפגש בודד יכול לדרוס אותו</small></span>
+      <span class="lb">מיקום ברירת מחדל<small>${esc(a.place||'אין — נקבע לכל מפגש בנפרד')}</small></span>
       <span class="rt">${adm?'שינוי ›':'צפייה ›'}</span></button>
     <button class="row" data-a="s-days" data-i="${id}"><span class="ic">📅</span>
       <span class="lb">ימים ושעות<small>${esc(a.when)}</small></span><span class="rt">${adm?'שינוי ›':'צפייה ›'}</span></button>
