@@ -130,6 +130,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .car .cnm em{font-style:normal;font-weight:600;color:var(--muted);font-size:12.5px}
 .car .pax{font-size:13px;color:#374151;margin-top:2px;line-height:1.5}
 .car .pax b{font-weight:700;color:var(--kid)}
+.car .pax i{font-style:normal;font-size:11.5px;color:#9aa3af;margin-right:3px}
 .empty{color:var(--bad);font-size:13.5px;font-weight:700}
 .wait{font-size:13px;color:#7f1d1d;background:var(--bad-soft);border-radius:11px;padding:9px 11px;margin-top:8px;line-height:1.5}
 .unmarked{font-size:12.5px;color:#4b5563;background:#eef1f6;border-radius:11px;padding:9px 11px;margin-top:11px;line-height:1.5}
@@ -240,36 +241,43 @@ const KIDS={'דני':ME,'מאיה':ME,'נועה':'דנה','איתי':'אורי',
 const DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 const DOWL=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
 
+/* יישובים — דרופדאון קבוע ועוד "אחר" בטקסט חופשי */
+const PLACES=['רגבה','עברון','בית העמק'];
+const HOME={'יותם':'רגבה','דנה':'עברון','אורי':'בית העמק','מיכל':'רגבה','רותם':'עברון',
+            'ליאת':'עברון','שי':'רגבה','נעמה':'בית העמק','גיא':'רגבה'};
+const kidHome=k=>HOME[KIDS[k]]||'';
+
 /* כל חוג הוא לוח בפני עצמו: רשימת משפחות משלו, הזמנה משלו, אישורים משלו. */
 const state={
-  car:{seats:5},
+  car:{seats:3,place:'רגבה'},          /* מקומות פנויים — בנוסף לילדים שלי */
   household:[{name:ME,mail:MYMAIL},{name:'אורנה',mail:'orna@…'}],
-  kids:[{name:'דני',acts:['judo']},{name:'מאיה',acts:['robo']}],
+  kids:[{name:'דני',acts:['ball']},{name:'מאיה',acts:['robo']}],
   acts:[
-    {id:'judo',name:'ג׳ודו',emoji:'🥋',when:'ימי ב׳ ו־ד׳ · 16:00–17:30',t1:'15:45',t2:'17:30',
+    {id:'ball',name:'כדורסל',emoji:'🏀',weekdays:[1,2,4,5],start:'16:30',
+     when:'ימי ב׳, ג׳, ה׳ ו־ו׳ · 16:30–18:00',t1:'16:15',t2:'18:00',
      myKids:['דני'],unmarked:['רותם'],
      members:[{n:'יותם',adm:1},{n:'דנה'},{n:'אורי',adm:1},{n:'מיכל'},{n:'רותם'}],
      pending:[{name:'יעל לוי',kid:'עידו',mail:'yael@…'}],
      sessions:[
-      {id:'s1',dow:1,date:'31.8',week:0,att:{'דני':1,'נועה':1,'איתי':1,'שירה':1},
-       offers:[{by:'דנה',to:1,from:1,seats:5}],mine:{to:0,from:0,seats:5}},
-      {id:'s2',dow:3,date:'2.9',week:0,att:{'דני':1,'נועה':1,'איתי':1,'שירה':1},
-       offers:[{by:'מיכל',to:1,from:0,seats:5}],mine:{to:0,from:0,seats:5}},
-      {id:'s3',dow:1,date:'7.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:5},fresh:true},
-      {id:'s4',dow:3,date:'9.9',week:1,att:{'דני':1,'נועה':1,'רוני':1},offers:[],mine:{to:1,from:1,seats:5}},
+      {id:'b01',dow:1,date:'31.8',week:0,att:{'דני':1,'נועה':1,'איתי':1},
+       offers:[{by:'דנה',to:1,from:1,seats:3}],mine:{to:0,from:0,seats:3}},
+      {id:'b02',dow:2,date:'1.9',week:0,att:{'דני':1,'נועה':1,'איתי':1,'שירה':1},
+       offers:[{by:'מיכל',to:1,from:0,seats:3}],mine:{to:0,from:0,seats:3}},
+      {id:'b03',dow:4,date:'3.9',week:0,att:{'דני':1,'נועה':1,'איתי':1,'שירה':1,'רוני':1},
+       offers:[{by:'אורי',to:1,from:1,seats:2}],mine:{to:0,from:0,seats:3}},
+      {id:'b04',dow:5,date:'4.9',week:0,att:{},offers:[],mine:{to:0,from:0,seats:3},fresh:true},
+      {id:'b05',dow:1,date:'7.9',week:1,att:{'דני':1,'נועה':1,'רוני':1},offers:[],mine:{to:1,from:1,seats:3}},
+      {id:'b06',dow:2,date:'8.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:3},fresh:true},
+      {id:'b07',dow:4,date:'10.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:3},fresh:true},
+      {id:'b08',dow:5,date:'11.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:3},fresh:true},
      ]},
-    {id:'robo',name:'רובוטיקה',emoji:'🤖',when:'ימי ג׳ · 17:00–18:30',t1:'16:45',t2:'18:30',
+    {id:'robo',name:'רובוטיקה',emoji:'🤖',weekdays:[3],start:'17:00',
+     when:'יום ד׳ · 17:00–18:30',t1:'16:45',t2:'18:30',
      myKids:['מאיה'],unmarked:[],
      members:[{n:'יותם'},{n:'דנה'},{n:'ליאת',adm:1},{n:'שי'}],pending:[],
      sessions:[
-      {id:'r1',dow:2,date:'1.9',week:0,att:{'מאיה':1,'עומר':1},offers:[{by:'ליאת',to:1,from:1,seats:5}],mine:{to:0,from:0,seats:5}},
-      {id:'r2',dow:2,date:'8.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:5},fresh:true},
-     ]},
-    {id:'swim',name:'שחייה',emoji:'🏊',when:'ימי ה׳ · 17:30–19:00',t1:'17:15',t2:'19:00',
-     myKids:[],unmarked:[],
-     members:[{n:'יותם'},{n:'נעמה',adm:1},{n:'גיא'}],pending:[],
-     sessions:[
-      {id:'w1',dow:4,date:'3.9',week:0,att:{'רוני':1,'שירה':1},offers:[],mine:{to:0,from:0,seats:5}},
+      {id:'r1',dow:3,date:'2.9',week:0,att:{'מאיה':1,'עומר':1},offers:[{by:'ליאת',to:1,from:1,seats:3}],mine:{to:0,from:0,seats:3}},
+      {id:'r2',dow:3,date:'9.9',week:1,att:{},offers:[],mine:{to:0,from:0,seats:3},fresh:true},
      ]},
   ]
 };
@@ -295,19 +303,21 @@ function driversFor(s,dir){
   if(s.mine[dir]) l.unshift({by:ME,seats:s.mine.seats,mine:true});
   return l;
 }
-/* מקומות = מושבים פחות הנהג. הילדים של הנהג נכנסים לרכב שלו קודם. */
+/* מקומות = מקומות פנויים לילדים אחרים. הילדים של הנהג נוסעים איתו ולא נספרים. */
 function assign(s,dir){
   const riders=Object.keys(s.att).filter(k=>s.att[k]);
-  const cars=driversFor(s,dir).map(d=>({...d,cap:d.seats-1,pax:[]}));
+  const cars=driversFor(s,dir).map(d=>({...d,cap:d.seats,pax:[],own:0}));
+  const free=c=>c.cap-(c.pax.length-c.own);
   const left=[];
   riders.forEach(k=>{
-    const own=cars.find(c=>c.by===KIDS[k]&&c.pax.length<c.cap);
-    if(own) own.pax.push(k); else left.push(k);
+    const own=cars.find(c=>c.by===KIDS[k]);
+    if(own){ own.pax.push(k); own.own++; } else left.push(k);
   });
   left.slice().forEach(k=>{
-    const c=cars.find(c=>c.pax.length<c.cap);
+    const c=cars.find(c=>free(c)>0);
     if(c){c.pax.push(k);left.splice(left.indexOf(k),1);}
   });
+  cars.forEach(c=>c.free=free(c));
   return {cars,waiting:left,riders};
 }
 function legStatus(s,dir){
@@ -420,7 +430,7 @@ function dayHTML(a,s){
   }
 
   /* --- שמאל: ימין גדול = און/אוף, שמאל = הלוך מעל חזור --- */
-  const seats=(driving?m.seats-1:state.car.seats-1)+' מקומות';
+  const seats=(driving?m.seats:state.car.seats)+' מקומות פנויים';
   const driveHalf=`<button class="half drive ${driving?'on':''}" data-a="drive" data-i="${a.id}" data-s="${s.id}">
       <span class="dmain"><span class="sw2 ${driving?'on':''}"></span>
         <span class="hval">${driving?'מסיעים':'לא מסיעים'}</span>
@@ -431,7 +441,7 @@ function dayHTML(a,s){
       </span></button>`;
 
   return `<div class="day ${open?'open':''}">
-    <div class="dayhead"><span class="dow">יום ${DOW[s.dow]}</span><span class="dt">${s.date}</span>
+    <div class="dayhead"><span class="dow">יום ${DOW[s.dow]}</span><span class="dt">${s.date}</span>${s.oneOff?'<span class="tag">חד־פעמי</span>':''}
       <span class="tm">${a.t1} · ${a.t2}</span>
       <button class="kebab" data-a="ctx" data-i="${a.id}" data-s="${s.id}">⋮</button></div>
     <div class="halves">${kidHalf}${driveHalf}</div>
@@ -447,8 +457,8 @@ function detailHTML(a,s,d){
     if(!riders.length) return h+`<div style="font-size:13.5px;color:#9aa3af">אין ילדים רשומים</div></div>`;
     if(!cars.length) h+=`<div class="empty">⚠ אין הסעה · ${riders.length} ילדים ממתינים</div>`;
     h+=cars.map(c=>`<div class="car ${c.mine?'mine':''}"><span class="av">${c.mine?'★':esc(c.by[0])}</span>
-      <span class="cinfo"><span class="cnm">${c.mine?'אני':esc(c.by)} <em>· ${c.cap-c.pax.length} מקומות פנויים</em></span>
-      <span class="pax">${c.pax.map(p=>KIDS[p]===ME?`<b>${esc(p)}</b>`:esc(p)).join(' · ')||'—'}</span></span></div>`).join('');
+      <span class="cinfo"><span class="cnm">${c.mine?'אני':esc(c.by)} <em>· ${esc(c.mine?state.car.place:HOME[c.by]||'')} · ${c.free} מקומות פנויים</em></span>
+      <span class="pax">${c.pax.map(p=>(KIDS[p]===ME?`<b>${esc(p)}</b>`:esc(p))+`<i> (${esc(kidHome(p))})</i>`).join(' · ')||'—'}</span></span></div>`).join('');
     if(waiting.length) h+=`<div class="wait">⚠ ללא הסעה: ${waiting.map(esc).join(', ')}</div>`;
     return h+'</div>';
   };
@@ -469,7 +479,11 @@ const INVITE={by:'דנה כהן',name:'ציור',emoji:'🎨',dow:2,start:'17:00
 
 const minus15=t=>{const[h,m]=t.split(':').map(Number);let x=h*60+m-15;if(x<0)x+=1440;
   return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');};
-const whenTxt=(days,s,e)=>'ימי '+[...days].sort().map(d=>DOWL[d]).join(' ו־')+' · '+s+'–'+e;
+const whenTxt=(days,s,e)=>{
+  const d=[...days].sort().map(x=>DOWL[x]);
+  const list=d.length===1?d[0]:d.slice(0,-1).join(', ')+' ו־'+d[d.length-1];
+  return (d.length===1?'יום ':'ימי ')+list+' · '+s+'–'+e;
+};
 
 const STEPS={create:['details','kids','invite'], join:['landing','mail','code','kids']};
 const wz=()=>view.wz;
@@ -521,9 +535,12 @@ function fKids(w){
     <div class="field"><div class="pick">
       ${state.kids.map(k=>`<span class="pk ${(w.kids||[]).includes(k.name)?'on':''}" data-a="f-kid" data-v="${esc(k.name)}">${esc(k.name)}</span>`).join('')}
       <span class="pk" data-a="noop">＋ ילד חדש</span></div></div>
-    <div class="field"><div class="flab">כמה מקומות ברכב שלכם</div>
-      <div class="pick">${[4,5,6,7].map(n=>`<span class="pk ${(w.seats||state.car.seats)===n?'on':''}" data-a="f-seats" data-v="${n}">${n}</span>`).join('')}</div>
-      <p class="fs" style="margin:9px 2px 0;font-size:13px">כולל הנהג — כלומר ${(w.seats||state.car.seats)-1} מקומות לילדים.</p></div>
+    <div class="field"><div class="flab">מקומות פנויים ברכב שלכם</div>
+      <div class="pick">${[1,2,3,4,5,6].map(n=>`<span class="pk ${(w.seats||state.car.seats)===n?'on':''}" data-a="f-seats" data-v="${n}">${n}</span>`).join('')}</div>
+      <p class="fs" style="margin:9px 2px 0;font-size:13px">בנוסף לילדים שלכם — כלומר כמה ילדים <b>אחרים</b> אפשר לקחת.</p></div>
+    <div class="field"><div class="flab">היישוב שלכם</div>
+      <div class="pick">${PLACES.map(pl=>`<span class="pk ${(w.place||state.car.place)===pl?'on':''}" data-a="f-place" data-v="${esc(pl)}">${esc(pl)}</span>`).join('')}
+      <span class="pk" data-a="noop">אחר</span></div></div>
     ${(w.kids||[]).length?`<button class="row" data-a="f-auto" style="background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;border-bottom:1.5px solid var(--line)">
       <span class="ic">🔁</span><span class="lb">מגיעים לכל המפגשים<small>ברירת מחדל שאפשר לבטל ביום בודד. בלי זה הלוח יתחיל ריק.</small></span>
       <span class="sw ${w.auto?'on':''}"></span></button>`:''}`;
@@ -695,8 +712,10 @@ function sAct(id){
       <span class="sw ${a.autoAtt?'on':''}"></span></button>
     <button class="row" data-a="noop"><span class="ic">🚗</span>
       <span class="lb">ימי הסעה קבועים<small>ימים שבהם אנחנו מסיעים</small></span><span class="rt">לא הוגדר ›</span></button>
-    <button class="row" data-a="noop"><span class="ic">📅</span>
+    <button class="row" data-a="s-days" data-i="${id}"><span class="ic">📅</span>
       <span class="lb">ימים ושעות<small>${esc(a.when)}</small></span><span class="rt">${adm?'שינוי ›':'צפייה ›'}</span></button>
+    ${adm?`<button class="row" data-a="s-extra" data-i="${id}"><span class="ic">➕</span>
+      <span class="lb">מפגש חד־פעמי<small>אימון השלמה או מועד שלא בתבנית הקבועה</small></span><span class="rt">›</span></button>`:''}
     <button class="row" data-a="noop"><span class="ic">🔁</span>
       <span class="lb">חזרתיות<small>כל שבוע · עד 30.6</small></span><span class="rt">${adm?'שינוי ›':'צפייה ›'}</span></button>
     ${adm?`<button class="row" data-a="noop"><span class="ic">🚫</span>
@@ -715,6 +734,37 @@ function sAct(id){
       ${lastAdmin?'<small style="color:var(--bad)">אני המנהל היחיד — צריך למנות מנהל אחר קודם</small>':''}</span>
       <span class="rt">›</span></button>`);
 }
+/* עריכת ימים ושעות — משנה את התבנית ומייצר/מסיר מפגשים בהתאם */
+function sDays(id){
+  const a=actById(id), adm=iAdmin(a), d=view.ed;
+  sheet('ימים ושעות · '+esc(a.name), adm?'שינוי יחול על כל המפגשים הבאים':'רק מנהלי החוג יכולים לשנות',
+    `<div class="field"><div class="flab">ימי החוג</div>
+      <div class="pick">${[0,1,2,3,4,5].map(x=>
+        `<span class="pk ${d.days.includes(x)?'on':''}" ${adm?`data-a="ed-day" data-v="${x}"`:''}>${DOWL[x]}</span>`).join('')}</div></div>
+     <div class="field"><div class="flab">שעות</div>
+      <div class="two"><input class="inp" type="time" data-f="edStart" value="${d.start}" ${adm?'':'disabled'}>
+      <input class="inp" type="time" data-f="edEnd" value="${d.end}" ${adm?'':'disabled'}></div>
+      <p class="fs" style="margin:9px 2px 0;font-size:13px">
+        האיסוף מסומן 15 דקות לפני — כרגע ${minus15(d.start)}.</p></div>
+     ${adm?`<button class="row" data-a="ed-save" data-i="${id}" style="background:var(--kid);color:#fff;
+       border-radius:14px;padding:15px;justify-content:center;font-weight:800;margin-top:6px">
+       שמירה</button>
+       <p class="fs" style="margin:12px 2px 0;font-size:12.5px">
+         ימים שיוסרו — המפגשים שלהם יימחקו יחד עם מה שסומן בהם. ימים שיתווספו יופיעו ריקים.</p>`:''}`);
+}
+
+/* מפגש חד־פעמי שלא בתבנית הקבועה */
+function sExtra(id){
+  const a=actById(id);
+  sheet('מפגש חד־פעמי · '+esc(a.name),'נוסף ללוח בלי לשנות את הימים הקבועים',
+    `<div class="field"><div class="flab">תאריך</div>
+      <input class="inp" type="date" data-f="exDate" value="${view.ed.exDate||''}"></div>
+     <div class="hint">שימושי לאימון השלמה, טורניר, או מועד שהוזז. אפשר למחוק אותו אחר כך
+       דרך ⋮ שעל הריבוע.</div>
+     <button class="row" data-a="ex-add" data-i="${id}" style="background:var(--kid);color:#fff;
+       border-radius:14px;padding:15px;justify-content:center;font-weight:800">הוספה ללוח</button>`);
+}
+
 function sMem(id){
   const a=actById(id), adm=iAdmin(a);
   sheet('המשפחות ב'+esc(a.name), famLbl(a.members.length)+' · '+admLbl(adminCount(a))+' · רואות רק את החוג הזה',
@@ -772,12 +822,23 @@ function sCopy(id){
     `<button class="row" data-a="noop"><span class="ic">📤</span><span class="lb">שליחת הזמנות</span><span class="rt">›</span></button>`);
 }
 function sCar(){
+  const other=!PLACES.includes(state.car.place);
   sheet('הרכב שלי','ברירת מחדל לכל ההסעות שלי בכל החוגים',`
-    <div class="row"><span class="ic">🚗</span><span class="lb">מקומות ברכב<small>כולל הנהג</small></span>
-      <span class="step"><button data-a="seats" data-v="-1">−</button><span>${state.car.seats}</span>
-      <button data-a="seats" data-v="1">+</button></span></div>
-    <div class="row"><span class="ic">👶</span><span class="lb">מקומות לילדים<small>נגזר אוטומטית</small></span>
-      <span class="rt">${state.car.seats-1}</span></div>`);
+    <div class="field" style="margin:4px 0 18px">
+      <div class="flab">מקומות פנויים — בנוסף לילדים שלי</div>
+      <div class="pick">${[1,2,3,4,5,6].map(n=>
+        `<span class="pk ${state.car.seats===n?'on':''}" data-a="seats" data-v="${n}">${n}</span>`).join('')}</div>
+      <p class="fs" style="margin:9px 2px 0;font-size:13px">
+        כלומר כמה ילדים <b>אחרים</b> אפשר לקחת. הילדים שלכם נוסעים איתכם ולא נספרים.</p></div>
+    <div class="field">
+      <div class="flab">היישוב שלנו</div>
+      <div class="pick">${PLACES.map(pl=>
+        `<span class="pk ${state.car.place===pl?'on':''}" data-a="place" data-v="${esc(pl)}">${esc(pl)}</span>`).join('')}
+        <span class="pk ${other?'on':''}" data-a="place" data-v="__other">אחר</span></div>
+      ${other?`<input class="inp" style="margin-top:9px" data-f="place"
+        value="${esc(state.car.place)}" placeholder="שם היישוב">`:''}
+      <p class="fs" style="margin:9px 2px 0;font-size:13px">
+        מופיע ליד שם הילד ברשימת הנוסעים, כדי שהנהג ידע את המסלול.</p></div>`);
 }
 function sAcct(){
   sheet('חשבון ומשק בית','הילדים משותפים לכל מי שבמשק הבית',
@@ -801,10 +862,11 @@ function sCtx(aid,sid){
     <button class="row" data-a="self" data-i="${aid}" data-s="${sid}"><span class="ic">🚶</span>
       <span class="lb">מגיעים, בלי הסעה<small>ביום זה מגיעים עצמאית</small></span>
       <span class="sw ${s.selfRide?'on':''}"></span></button>
-    <div class="row"><span class="ic">💺</span>
-      <span class="lb">מקומות בנסיעה הזו בלבד<small>אם היום יש פחות מקום ברכב</small></span>
-      <span class="step"><button data-a="dseats" data-i="${aid}" data-s="${sid}" data-v="-1">−</button>
-      <span>${s.mine.seats}</span><button data-a="dseats" data-i="${aid}" data-s="${sid}" data-v="1">+</button></span></div>`);
+    <div class="field" style="margin:10px 0 4px">
+      <div class="flab">💺 מקומות פנויים בנסיעה הזו בלבד</div>
+      <div class="pick">${[1,2,3,4,5,6].map(n=>`<span class="pk ${s.mine.seats===n?'on':''}"
+        data-a="dseats" data-i="${aid}" data-s="${sid}" data-v="${n}">${n}</span>`).join('')}</div>
+      <p class="fs" style="margin:9px 2px 0;font-size:13px">בנוסף לילדים שלכם — אם היום יש פחות מקום ברכב.</p></div>`);
 }
 
 /* ---------- ביטול הסעה ושיתוף ---------- */
@@ -846,8 +908,11 @@ function applyDrive(aid,sid,dirs,v){
 /* ===================== אירועים ===================== */
 /* קלט טקסט: כותבים למצב בלי לצייר מחדש, כדי לא לאבד פוקוס */
 document.addEventListener('input',e=>{
-  const el=e.target.closest('[data-f]'); if(!el||!view.wz) return;
+  const el=e.target.closest('[data-f]'); if(!el) return;
   const f=el.dataset.f;
+  if(f==='place'){ state.car.place=el.value; HOME[ME]=el.value; return; }
+  if(f.startsWith('ed')||f==='exDate'){ (view.ed=view.ed||{})[f==='edStart'?'start':f==='edEnd'?'end':f]=el.value; return; }
+  if(!view.wz) return;
   if(/^c\d$/.test(f)){                       /* תיבות הקוד */
     const d=(el.value||'').replace(/\D/g,'').slice(0,1); el.value=d;
     const arr=[...document.querySelectorAll('.code input')];
@@ -889,6 +954,7 @@ document.addEventListener('click',e=>{
     }
     case 'f-emoji': view.wz.emoji=el.dataset.v; render(); return;
     case 'f-seats': view.wz.seats=+el.dataset.v; render(); return;
+    case 'f-place': view.wz.place=el.dataset.v; render(); return;
     case 'f-auto':  view.wz.auto=!view.wz.auto; render(); return;
     case 'f-day':{
       const d=+el.dataset.v, i=view.wz.days.indexOf(d);
@@ -990,13 +1056,55 @@ document.addEventListener('click',e=>{
 
     /* מספרים ומתגים */
     case 'seats':
-      state.car.seats=Math.min(9,Math.max(2,state.car.seats+(+el.dataset.v)));
+      state.car.seats=+el.dataset.v;
       state.acts.forEach(x=>x.sessions.forEach(s=>{ if(!s.customSeats) s.mine.seats=state.car.seats; }));
       sCar(); render(); return;
+    case 'place':
+      state.car.place = el.dataset.v==='__other' ? '' : el.dataset.v;
+      HOME[ME]=state.car.place; sCar(); render(); return;
     case 'dseats':{
       const s=sess(id,sid);
-      s.mine.seats=Math.min(9,Math.max(2,s.mine.seats+(+el.dataset.v))); s.customSeats=true;
+      s.mine.seats=+el.dataset.v; s.customSeats=true;
       sCtx(id,sid); render(); return;
+    }
+
+    /* --- עריכת ימים ושעות --- */
+    case 's-days':
+      view.ed={days:[...actById(id).weekdays],start:actById(id).start,end:actById(id).t2};
+      push((i=>()=>sDays(i))(id)); return;
+    case 's-extra': view.ed={}; push((i=>()=>sExtra(i))(id)); return;
+    case 'ed-day':{
+      const x=+el.dataset.v, i=view.ed.days.indexOf(x);
+      if(i<0) view.ed.days.push(x); else view.ed.days.splice(i,1);
+      sDays(id||view.actId); return;
+    }
+    case 'ed-save':{
+      const a=actById(id), d=view.ed;
+      if(!d.days.length){ toast('צריך לבחור לפחות יום אחד'); return; }
+      const days=[...d.days].sort();
+      a.weekdays=days; a.start=d.start; a.t1=minus15(d.start); a.t2=d.end;
+      a.when=whenTxt(days,d.start,d.end);
+      /* מפגשים של ימים שהוסרו נמחקים; ימים חדשים נוצרים ריקים; חד־פעמיים נשארים */
+      a.sessions=a.sessions.filter(s=>s.oneOff||days.includes(s.dow));
+      [0,1].forEach(wk=>days.forEach(x=>{
+        if(!a.sessions.some(s=>!s.oneOff&&s.week===wk&&s.dow===x))
+          a.sessions.push({id:a.id+wk+x,dow:x,date:DATES[wk][x],week:wk,att:{},offers:[],
+                           mine:{to:0,from:0,seats:state.car.seats},fresh:true});
+      }));
+      a.sessions.sort((p,q)=>p.week-q.week||DATES[p.week].indexOf(p.date)-DATES[q.week].indexOf(q.date));
+      pop(); toast('הימים והשעות עודכנו'); return;
+    }
+    case 'ex-add':{
+      const a=actById(id), v=view.ed.exDate;
+      if(!v){ toast('צריך לבחור תאריך'); return; }
+      const dt=new Date(v+'T00:00:00'), dow=dt.getDay();
+      const label=dt.getDate()+'.'+(dt.getMonth()+1);
+      let wk=DATES.findIndex(w=>w.includes(label)); if(wk<0) wk=1;
+      if(a.sessions.some(s=>s.date===label)){ toast('כבר יש מפגש בתאריך הזה'); return; }
+      a.sessions.push({id:a.id+'x'+label,dow,date:label,week:wk,oneOff:true,att:{},offers:[],
+                       mine:{to:0,from:0,seats:state.car.seats},fresh:true});
+      a.sessions.sort((p,q)=>p.week-q.week||DATES[p.week].indexOf(p.date)-DATES[q.week].indexOf(q.date));
+      pop(); toast('נוסף מפגש ביום '+DOW[dow]+' '+label); return;
     }
     case 'auto-att':{
       const t=actById(id); t.autoAtt=!t.autoAtt;
