@@ -924,6 +924,7 @@ window.addEventListener('popstate',e=>{
 
 function push(fn){ navGo({type:'sheet',draw:fn}); }
 function pop(){ navBack(1); }
+function redrawTop(){ const t=nav[nav.length-1]; if(t && t.type!=='act') t.draw(); }
 function close(){ navCloseLayers(); }
 function sheet(title,sub,body){
   layer.innerHTML=`<div class="scrim" data-a="close"><div class="sheet" data-stop><div class="grab"></div>
@@ -986,7 +987,7 @@ function sAct(id){
     <button class="no" data-a="rej" data-i="${id}" data-p="${i}">דחייה</button></div></div>`).join('');
   sheet(a.emoji+' '+esc(a.name), esc(a.when)+' · '+(adm?'בניהול שלי · '+admLbl(na):'חברות בחוג'),
     (adm&&a.pending.length?`<div class="pendttl">ממתינים לאישור</div>${pend}`:'')+`
-    <button class="row" data-a="noop"><span class="ic">🧒</span>
+    <button class="row" data-a="s-actkids" data-i="${id}"><span class="ic">🧒</span>
       <span class="lb">הילדים שלי בחוג<small>${a.myKids.length?esc(a.myKids.join(', ')):'אין — הסעות בלבד'}</small></span><span class="rt">שינוי ›</span></button>
     <button class="row" data-a="auto-att" data-i="${id}"><span class="ic">✅</span>
       <span class="lb">מגיעים כברירת מחדל בכל המפגשים<small>אפשר לבטל מפגש בודד</small></span>
@@ -1100,6 +1101,20 @@ function sAddKid(){
       <input class="inp" data-f="kidName" value="${esc(view.newKid||'')}" placeholder="השם שיופיע בלוח"></div>
      <button class="row" data-a="kid-save" style="background:var(--kid);color:#fff;border-radius:14px;
        padding:15px;justify-content:center;font-weight:800">הוספה</button>`);
+}
+
+function sActKids(id){
+  const a=actById(id);
+  sheet('הילדים שלי ב'+esc(a.name),'אפשר להוסיף או להוריד ילד בכל שלב',
+    (state.kids.length ? state.kids.map(k=>{
+      const on=a.myKids.includes(k.name);
+      return `<button class="row" data-a="kid-act" data-k="${esc(k.name)}" data-i="${id}">
+        <span class="ic">🧒</span><span class="lb">${esc(k.name)}</span>
+        <span class="sw ${on?'on':''}"></span></button>`;}).join('')
+      : '<div class="hint">עוד אין ילדים במשק הבית.</div>') +
+    `<button class="row" data-a="add-kid"><span class="ic">＋</span>
+      <span class="lb">הוספת ילד</span><span class="rt">›</span></button>
+     <div class="hint">חוג בלי ילד שלכם עדיין שימושי — אפשר להיות רשומים כמסיעים בלבד.</div>`);
 }
 
 function sMem(id){
@@ -1438,7 +1453,8 @@ document.addEventListener('click',async e=>{
     case 's-car':    push(sCar); return;
     case 's-acct':   push(sAcct); return;
     case 'act-set':  push((i=>()=>sAct(i))(id)); return;
-    case 's-mem':    push((i=>()=>sMem(i))(id)); return;
+    case 's-mem':     push((i=>()=>sMem(i))(id)); return;
+    case 's-actkids': push((i=>()=>sActKids(i))(id)); return;
     case 's-copy':   push((i=>()=>sCopy(i))(id)); return;
     case 's-invite': push((i=>()=>sInvite(i))(id)); return;
     case 's-member': push(((i,m)=>()=>sMember(i,m))(id,el.dataset.m)); return;
@@ -1488,7 +1504,7 @@ document.addEventListener('click',async e=>{
           ? await sb.from('activity_kids').delete().eq('activity_id',id).eq('kid_id',k.id)
           : await sb.from('activity_kids').insert({activity_id:id, kid_id:k.id});
         if(error) throw error;
-        await loadState(); sKid(k.name); render();
+        await loadState(); redrawTop(); render();
       }catch(e){ toast('נכשל: '+(e.message||e)); }
       return;
     }
