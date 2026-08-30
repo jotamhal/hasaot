@@ -372,6 +372,7 @@ function homeHTML(){
   return `<div class="top"><h1>ההסעות שלי<small>${esc(state.household[0]?.mail||'')}</small></h1>
       <button class="iconbtn" data-a="settings">⚙︎${pc?`<span class="bdg">${pc}</span>`:''}</button></div>
 ${loadErr?`<div class="lonely"><div class="lt">שגיאת טעינה</div><div class="ls">${esc(loadErr)}</div></div>`:''}
+    ${invite&&invite.waiting?`<div class="lonely"><div class="lt">הבקשה נשלחה</div><div class="ls">מנהל החוג צריך לאשר את ההצטרפות. תקבלו גישה ברגע שזה יקרה.</div></div>`:''}
     ${state.acts.length?'':`<div class="lonely"><div class="lt">עוד אין חוגים</div><div class="ls">אפשר ליצור חוג חדש, או להצטרף לחוג קיים דרך קישור הזמנה שקיבלתם.</div></div>`}
     ${strip}
     ${state.acts.map(a=>{
@@ -393,7 +394,7 @@ function actHTML(){
     <h1>${a.emoji} ${esc(a.name)}<small>${esc(a.when)} · ${famLbl(a.members.length)}</small></h1>
     <button class="iconbtn" data-a="act-set" data-i="${a.id}">⋮${a.pending.length?`<span class="bdg">${a.pending.length}</span>`:''}</button></div>`;
   if(a.members.length===1){                    /* חוג טרי — הבעיה היא שאין עם מי להתחלף */
-    const t=`הצטרפו ללוח ההסעות של ${a.name}\n${a.when}\n\n👉 hasaot.app/j/8fk2`;
+    const t=`הצטרפו ללוח ההסעות של ${a.name}\n${a.when}\n\n👉 ${inviteURL(a.token)}`;
     out+=`<div class="lonely"><div class="lt">רק אתם בחוג</div>
       <div class="ls">אפשר לסמן מתי הילדים מגיעים, אבל בלי עוד משפחות אין עם מי להתחלף.</div>
       <button data-a="wa" data-t="${encodeURIComponent(t)}">💬 לשלוח את ההזמנה לקבוצה</button></div>`;
@@ -582,12 +583,12 @@ function fKids(w){
       <span class="sw ${w.auto?'on':''}"></span></button>`:''}`;
 }
 function fInvite(w){
-  const t=`הצטרפו ללוח ההסעות של ${w.name}\n${whenTxt(w.days,w.start,w.end)}\n\n👉 hasaot.app/j/8fk2`;
+  const t=`הצטרפו ללוח ההסעות של ${w.name}\n${whenTxt(w.days,w.start,w.end)}\n\n👉 ${inviteURL(view.newActToken)}`;
   return `<h2 class="fh">מזמינים את שאר ההורים</h2>
     <p class="fs">בלי עוד משפחות אין עם מי להתחלף. זה הצעד שקובע אם הלוח יעבוד.</p>
     <div class="inv"><div class="av">${w.emoji||'🏅'}</div>
       <div class="t"><b>${esc(w.name)}</b><br>${esc(whenTxt(w.days,w.start,w.end))}</div>
-      <div class="meta">hasaot.app/j/8fk2<br>הקישור בתוקף 7 ימים · הצטרפות דורשת אישור</div></div>
+      <div class="meta">${esc(inviteURL(view.newActToken))}<br>הקישור בתוקף 7 ימים · הצטרפות דורשת אישור</div></div>
     <button class="shareb" data-a="wa" data-t="${encodeURIComponent(t)}" style="margin:0 0 10px">💬 לשלוח לקבוצת הוואטסאפ</button>
     <button class="row" data-a="noop" style="background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px">
       <span class="ic">✉️</span><span class="lb">הזמנה אישית במייל<small>אפשר גם להזמין ישירות כמנהל</small></span><span class="rt">›</span></button>`;
@@ -670,6 +671,7 @@ let auth = {step:'mail', mail:'', code:'', busy:false, err:''};
 function authHTML(){
   const a = auth;
   return `<div class="top"><h1>לוח ההסעות<small>תיאום הסעות לחוגים</small></h1></div>
+    ${inviteCard()}
     ${a.step==='mail' ? `
       <h2 class="fh">כניסה</h2>
       <p class="fs">נשלח קוד בן 6 ספרות. בלי סיסמה ובלי מספר טלפון.</p>
@@ -707,6 +709,45 @@ async function authGo(){
     }
   }catch(e){ auth.err = e.message || String(e); }
   auth.busy=false; render();
+}
+
+
+/* ---------- קישורי הזמנה והצטרפות ---------- */
+const APP_URL = location.origin + location.pathname;
+const inviteURL = tok => tok ? APP_URL + '?j=' + tok : APP_URL;
+let invite = null;                 /* {token, p} — כשנכנסים דרך קישור */
+
+async function loadInvite(){
+  const tok = new URLSearchParams(location.search).get('j');
+  if(!tok) return;
+  try{
+    const {data} = await sb.rpc('invite_preview', {p_token: tok});
+    invite = {token: tok, p: (data && data[0]) || null};
+  }catch(e){ invite = {token: tok, p: null}; }
+}
+
+function inviteCard(){
+  if(!invite) return '';
+  const p = invite.p;
+  if(!p) return `<div class="lonely"><div class="lt">קישור ההזמנה לא תקף</div>
+    <div class="ls">ייתכן שפג תוקפו. אפשר לבקש קישור חדש ממי ששלח.</div></div>`;
+  const days = (p.weekdays||[]).map(d=>DOWL[d]).join(', ');
+  return `<div class="inv"><div class="av">${p.emoji||'🔗'}</div>
+    <div class="t">${p.inviter?`<b>${esc(p.inviter)}</b> מזמין אתכם ללוח ההסעות של<br>`:''}
+      <b>${esc(p.name)}</b></div>
+    <div class="meta">ימי ${esc(days)} · ${(p.starts_at||'').slice(0,5)}–${(p.ends_at||'').slice(0,5)}<br>
+      ${famLbl(p.families||0)} כבר בחוג</div></div>`;
+}
+
+async function redeemInvite(){
+  if(!invite || !invite.p) return;
+  try{
+    const {data:actId, error} = await sb.rpc('join_by_token', {p_token: invite.token});
+    if(error) throw error;
+    history.replaceState({n:0}, '', APP_URL);      /* לנקות את הטוקן מהכתובת */
+    if(!actId){ invite.waiting = true; return; }
+    invite = null;
+  }catch(e){ toast('ההצטרפות נכשלה: '+(e.message||e)); }
 }
 
 /* ---------- טעינת כל מה שהמשתמש רשאי לראות ---------- */
@@ -811,6 +852,7 @@ async function loadState(){
 
       return {
         id:a.id, name:a.name, emoji:a.emoji||'🏅', place:a.place||'',
+        token:a.invite_token,
         weekdays:days, start:(a.starts_at||'').slice(0,5), lead,
         t1: a.starts_at ? minusMin(a.starts_at.slice(0,5), lead) : '',
         t2: (a.ends_at||'').slice(0,5),
@@ -828,9 +870,11 @@ async function loadState(){
 
 let loadErr = '';
 async function boot(){
+  await loadInvite();
   const {data:{session}} = await sb.auth.getSession();
   if(!session){ view.screen='auth'; render(); return; }
   view.screen='loading'; render();
+  await redeemInvite();
   try { await loadState(); loadErr=''; }
   catch(e){
     if(/JWT|jwt/.test(e.message||'')){       /* פער שעונים — טוקן טרי ונסיון נוסף */
@@ -1161,12 +1205,12 @@ function sCtx(aid,sid){
 /* ---------- ביטול הסעה ושיתוף ---------- */
 function waText(a,s,kind){
   const day='יום '+DOW[s.dow]+' '+s.date;
-  if(kind==='cancel') return `ההסעה ב${day} (${a.name}) בוטלה.\nחסרה הסעה — מי יכול להחליף?\n\n👉 בלוח: hasaot.app/${a.id}`;
+  if(kind==='cancel') return `ההסעה ב${day} (${a.name}) בוטלה.\nחסרה הסעה — מי יכול להחליף?\n\n👉 בלוח: ${inviteURL(a.token)}`;
   const d=dayStatus(s), miss=[];
   if(d.to.k==='bad') miss.push('הלוך '+a.t1+' — '+d.to.msg);
   if(d.fr.k==='bad') miss.push('חזור '+a.t2+' — '+d.fr.msg);
   const n=Object.keys(s.att).filter(k=>s.att[k]).length;
-  return `${a.name} · ${day}\n${miss.join('\n')}\n${n} ילדים רשומים.\nמי יכול?\n\n👉 hasaot.app/${a.id}`;
+  return `${a.name} · ${day}\n${miss.join('\n')}\n${n} ילדים רשומים.\nמי יכול?\n\n👉 ${inviteURL(a.token)}`;
 }
 function shareModal(a,s,kind){
   const t=waText(a,s,kind);
@@ -1183,7 +1227,7 @@ function editShare(a,s,diffs,title){
           + 'יום ' + DOW[s.dow] + ' ' + s.date + NL + NL
           + diffs.join(NL)
           + (s.cancelled ? '' : NL + NL + 'הפרטים המעודכנים: ' + sT1(a,s) + '–' + sT2(a,s) + ' · ' + sPlace(a,s))
-          + NL + NL + '👉 hasaot.app/' + a.id;
+          + NL + NL + '👉 ' + inviteURL(a.token);
   const html = `<h3>${title||'פרטי המפגש עודכנו'}</h3>
     <p>מי שלא ייכנס ללוח לא ידע שהשתנה משהו. כדאי לשלוח לקבוצה.</p>
     <div class="wa">${esc(t)}</div><div class="btns">
@@ -1262,6 +1306,7 @@ async function finishFlow(){
       if(rows.length) await sb.from('activity_kids').insert(rows);
     }
     await loadState();
+    view.newActToken = (state.acts.find(a=>a.id===newId)||{}).token;
     navReset({type:'act', id:newId});
     toast('החוג נוצר');
   }catch(e){ toast('נכשל: '+(e.message||e)); }
@@ -1400,10 +1445,17 @@ document.addEventListener('click',async e=>{
     case 'inv-role': actById(id).inviteRole=el.dataset.r; sInvite(id); return;
 
     case 'mem-adm':{
-      const t=actById(id), m=mem(t,el.dataset.m);
-      if(m.adm&&adminCount(t)===1){ toast('צריך למנות מנהל נוסף לפני שמורידים את האחרון'); return; }
-      m.adm=m.adm?0:1; sMember(id,m.n); render();
-      toast(m.adm?m.n+' · מנהל/ת בחוג':m.n+' · חבר/ה בחוג'); return;
+      const t=actById(id), m=t.members.find(x=>x.n===el.dataset.m);
+      if(!m){ toast('לא נמצא'); return; }
+      if(m.adm && adminCount(t)===1){ toast('צריך למנות מנהל נוסף לפני שמורידים את האחרון'); return; }
+      try{
+        const {error} = await sb.from('activity_members').update({is_admin: !m.adm})
+          .eq('activity_id',id).eq('user_id',m.uid);
+        if(error) throw error;
+        await loadState(); sMember(id,m.n); render();
+        toast(m.adm ? m.n+' · חבר/ה בחוג' : m.n+' · מנהל/ת בחוג');
+      }catch(e){ toast('נכשל: '+(e.message||e)); }
+      return;
     }
     case 'mem-del':{
       const t=actById(id), name=el.dataset.m, m=mem(t,name);
@@ -1415,34 +1467,43 @@ document.addEventListener('click',async e=>{
       return;
     }
     case 'do-del':{
-      const t=actById(id), name=el.dataset.m;
-      t.members=t.members.filter(x=>x.n!==name);
-      t.unmarked=t.unmarked.filter(x=>x!==name);
-      t.sessions.forEach(s=>{
-        s.offers=s.offers.filter(o=>o.by!==name);
-        Object.keys(s.att).forEach(k=>{ if(KIDS[k]===name) delete s.att[k]; });
-      });
-      navBack(2); toast(name+' הוסר/ה מהחוג'); return;   /* סוגר את החלונית ואת גיליון המשפחה */
+      const t=actById(id), name=el.dataset.m, m=t.members.find(x=>x.n===name);
+      try{
+        const {error} = await sb.from('activity_members').delete()
+          .eq('activity_id',id).eq('user_id',m.uid);
+        if(error) throw error;
+        await loadState(); navBack(2); toast(name+' הוסר/ה מהחוג');
+      }catch(e){ toast('נכשל: '+(e.message||e)); }
+      return;
     }
     case 'last-admin':
       toast('צריך למנות מנהל אחר לפני יציאה מהחוג'); return;
     case 'ctx':      push(((i,x)=>()=>sCtx(i,x))(id,sid)); return;
 
     case 'kid-act':{
-      const k=state.kids.find(x=>x.name===el.dataset.k), t=actById(id), i=k.acts.indexOf(id);
-      if(i<0){ k.acts.push(id); if(!t.myKids.includes(k.name)) t.myKids.push(k.name); }
-      else { k.acts.splice(i,1); t.myKids=t.myKids.filter(n=>n!==k.name);
-             t.sessions.forEach(s=>delete s.att[k.name]); }
-      sKid(k.name); render(); return;
+      const k=state.kids.find(x=>x.name===el.dataset.k);
+      const on=k.acts.includes(id);
+      try{
+        const {error} = on
+          ? await sb.from('activity_kids').delete().eq('activity_id',id).eq('kid_id',k.id)
+          : await sb.from('activity_kids').insert({activity_id:id, kid_id:k.id});
+        if(error) throw error;
+        await loadState(); sKid(k.name); render();
+      }catch(e){ toast('נכשל: '+(e.message||e)); }
+      return;
     }
-    case 'appr':{
-      const t=actById(id), p=t.pending.splice(+el.dataset.p,1)[0];
-      t.members.push({n:p.name.split(' ')[0]}); sAct(id); render(); toast(p.name+' צורף/ה לחוג'); return;
+    case 'appr': case 'rej':{
+      const t=actById(id), p=t.pending[+el.dataset.p];
+      if(!p){ toast('הבקשה כבר טופלה'); return; }
+      try{
+        const {error} = await sb.rpc('approve_request', {p_request:p.id, p_approve: a==='appr'});
+        if(error) throw error;
+        await loadState(); sAct(id); render();
+        toast(a==='appr' ? p.name+' צורף/ה לחוג' : 'הבקשה נדחתה');
+      }catch(e){ toast('נכשל: '+(e.message||e)); }
+      return;
     }
-    case 'rej':{
-      const t=actById(id); t.pending.splice(+el.dataset.p,1);
-      sAct(id); render(); toast('הבקשה נדחתה'); return;
-    }
+
 
     /* הריבועים */
     case 'kid':{
@@ -1513,7 +1574,14 @@ document.addEventListener('click',async e=>{
       if(view.ed.placeOther) document.querySelector('[data-f=edPlace]')?.focus();
       return;
     }
-    case 'pd-save': actById(id).place=view.ed.place||''; pop(); toast('המיקום עודכן'); return;
+    case 'pd-save':{
+      try{
+        const {error} = await sb.from('activities').update({place: view.ed.place||null}).eq('id',id);
+        if(error) throw error;
+        await reload(); pop(); toast('המיקום עודכן');
+      }catch(e){ toast('נכשל: '+(e.message||e)); }
+      return;
+    }
     case 's-extra': view.ed={}; push((i=>()=>sExtra(i))(id)); return;
     case 's-edit':{
       const a=actById(id), x=sess(id,sid);
@@ -1532,51 +1600,51 @@ document.addEventListener('click',async e=>{
       if(view.ed.placeOther) document.querySelector('[data-f=edPlace]')?.focus();
       return;
     case 'ed-sess-save':{
-      const a=actById(id), x=sess(id,sid), e=view.ed;
+      const a=actById(id), x=sess(id,sid), e=view.ed, was=e.was;
       if(!e.start||!e.end||e.end<=e.start){ toast('שעת הסיום צריכה להיות אחרי ההתחלה'); return; }
-      if(e.start!==a.start||e.end!==a.t2){ x.start=e.start; x.end=e.end; }
-      else { delete x.start; delete x.end; }
-      x.place = e.place&&e.place!==a.place ? e.place : undefined;
-      if(!x.place) delete x.place;
-      x.note = e.note&&e.note.trim() ? e.note.trim() : undefined;
-      if(!x.note) delete x.note;
-      if(e.date){                                  /* הזזת המפגש ליום אחר */
-        const dt=new Date(e.date+'T00:00:00'), lbl=dt.getDate()+'.'+(dt.getMonth()+1);
-        if(lbl!==x.date){
-          if(a.sessions.some(y=>y!==x&&y.date===lbl)){ toast('כבר יש מפגש בתאריך הזה'); return; }
-          if(!x.origDate) x.origDate=x.date;
-          x.date=lbl; x.dow=dt.getDay();
-          let wk=DATES.findIndex(w=>w.includes(lbl)); x.week=wk<0?1:wk;
-          a.sessions.sort((m,n)=>m.week-n.week||DATES[m.week].indexOf(m.date)-DATES[n.week].indexOf(n.date));
-        }
-      }
-      const was=e.was, diffs=[];
-      if(was.date!==x.date)
-        diffs.push('📅 תאריך: יום '+DOW[x.dow]+' '+x.date+'  (היה יום '+DOW[was.dow]+' '+was.date+')');
-      if(was.start!==sStart(a,x)||was.end!==sT2(a,x))
-        diffs.push('🕒 שעה: '+sStart(a,x)+'–'+sT2(a,x)+'  (היה '+was.start+'–'+was.end+')');
-      if(was.place!==sPlace(a,x))
-        diffs.push('📍 מיקום: '+sPlace(a,x)+'  (היה '+was.place+')');
-      if((was.note||'')!==(x.note||'')&&x.note) diffs.push('נוסף: '+x.note);
+      const nd = e.date ? (()=>{ const d=new Date(e.date+'T00:00:00');
+        return {lbl:d.getDate()+'.'+(d.getMonth()+1), dow:d.getDay(), iso:e.date}; })() : null;
+      const moved = nd && nd.lbl!==was.date;
+      const diffs=[];
+      if(moved) diffs.push('📅 תאריך: יום '+DOW[nd.dow]+' '+nd.lbl+'  (היה יום '+DOW[was.dow]+' '+was.date+')');
+      if(e.start!==was.start||e.end!==was.end)
+        diffs.push('🕒 שעה: '+e.start+'–'+e.end+'  (היה '+was.start+'–'+was.end+')');
+      if((e.place||'')!==(was.place||''))
+        diffs.push('📍 מיקום: '+(e.place||'לא נקבע')+'  (היה '+(was.place||'לא נקבע')+')');
+      if((e.note||'')!==(was.note||'') && e.note) diffs.push('נוסף: '+e.note);
       if(!diffs.length){ pop(); toast('לא השתנה כלום'); return; }
-      render(); editShare(a,x,diffs); return;
+      try{
+        const {error} = await sb.rpc('edit_session', {
+          p_session: x.id,
+          p_date:    moved ? nd.iso : null,
+          p_starts:  e.start!==was.start ? e.start : null,
+          p_ends:    e.end!==was.end     ? e.end   : null,
+          p_place:   (e.place||'')!==(was.place||'') ? (e.place||null) : null,
+          p_note:    e.note || null,
+        });
+        if(error) throw error;
+        await loadState(); render();
+        const A = actById(id) || a;
+        editShare(A, A.sessions.find(y=>y.id===sid) || x, diffs);
+      }catch(err){ toast('נכשל: '+(err.message||err)); }
+      return;
     }
     case 'ed-reset':{
-      const x=sess(id,sid);
-      ['start','end','place','note'].forEach(k=>delete x[k]);
-      if(x.origDate){ /* להחזיר לתאריך המקורי */
-        const lbl=x.origDate;
-        if(!actById(id).sessions.some(y=>y!==x&&y.date===lbl)){
-          x.date=lbl; delete x.origDate;
-          let wk=DATES.findIndex(w=>w.includes(lbl)); x.week=wk<0?0:wk;
-          x.dow=[0,1,2,3,4,5,6][DATES[x.week].indexOf(lbl)];
-        }
-      }
-      pop(); toast('הוחזר לברירת המחדל'); return;
+      try{
+        const {error} = await sb.rpc('reset_session', {p_session: sid});
+        if(error) throw error;
+        await reload(); pop(); toast('הוחזר לברירת המחדל');
+      }catch(e){ toast('נכשל: '+(e.message||e)); }
+      return;
     }
     case 'cancel-sess':{
       const a=actById(id), x=sess(id,sid);
-      if(x.cancelled){ delete x.cancelled; pop(); toast('המפגש הוחזר'); return; }
+      if(x.cancelled){
+        try{ const {error}=await sb.rpc('cancel_session',{p_session:x.id,p_cancel:false,p_note:null});
+          if(error) throw error; await reload(); pop(); toast('המפגש הוחזר'); }
+        catch(e){ toast('נכשל: '+(e.message||e)); }
+        return;
+      }
       modal(`<h3>לבטל את המפגש?</h3>
         <p>יום ${DOW[x.dow]} ${x.date} · ${esc(a.name)}.<br>
         המפגש יישאר בלוח מסומן כמבוטל, כדי שכל המשפחות יראו את זה.</p>
@@ -1585,8 +1653,15 @@ document.addEventListener('click',async e=>{
       return;
     }
     case 'do-cancel-sess':{
-      const a=actById(id), x=sess(id,sid); x.cancelled=true; render();
-      editShare(a,x,['🚫 המפגש בוטל'],'המפגש בוטל'); return;
+      const a=actById(id), x=sess(id,sid);
+      try{
+        const {error} = await sb.rpc('cancel_session', {p_session:x.id, p_cancel:true, p_note:null});
+        if(error) throw error;
+        await loadState(); render();
+        const A = actById(id) || a;
+        editShare(A, A.sessions.find(y=>y.id===sid) || x, ['🚫 המפגש בוטל'], 'המפגש בוטל');
+      }catch(e){ toast('נכשל: '+(e.message||e)); }
+      return;
     }
     case 'ed-day':{
       const x=+el.dataset.v, i=view.ed.days.indexOf(x);
@@ -1594,49 +1669,33 @@ document.addEventListener('click',async e=>{
       sDays(id||view.actId); return;
     }
     case 'ed-save':{
-      const a=actById(id), d=view.ed;
+      const d=view.ed;
       if(!d.days.length){ toast('צריך לבחור לפחות יום אחד'); return; }
-      const days=[...d.days].sort();
-      a.weekdays=days; a.start=d.start; a.t1=minus15(d.start); a.t2=d.end;
-      a.when=whenTxt(days,d.start,d.end);
-      /* מפגשים של ימים שהוסרו נמחקים; ימים חדשים נוצרים ריקים; חד־פעמיים נשארים */
-      a.sessions=a.sessions.filter(s=>s.oneOff||days.includes(s.dow));
-      [0,1].forEach(wk=>days.forEach(x=>{
-        if(!a.sessions.some(s=>!s.oneOff&&s.week===wk&&s.dow===x))
-          a.sessions.push({id:a.id+wk+x,dow:x,date:DATES[wk][x],week:wk,att:{},offers:[],
-                           mine:{to:0,from:0,seats:state.car.seats},fresh:true});
-      }));
-      a.sessions.sort((p,q)=>p.week-q.week||DATES[p.week].indexOf(p.date)-DATES[q.week].indexOf(q.date));
-      pop(); toast('הימים והשעות עודכנו'); return;
+      if(!d.start||!d.end||d.end<=d.start){ toast('שעת הסיום צריכה להיות אחרי ההתחלה'); return; }
+      try{
+        const {error} = await sb.rpc('set_schedule', {
+          p_activity:id, p_weekdays:[...d.days].sort(), p_starts:d.start, p_ends:d.end});
+        if(error) throw error;
+        await reload(); pop(); toast('הימים והשעות עודכנו');
+      }catch(e){ toast('נכשל: '+(e.message||e)); }
+      return;
     }
     case 'ex-add':{
-      const a=actById(id), v=view.ed.exDate;
+      const v=view.ed.exDate;
       if(!v){ toast('צריך לבחור תאריך'); return; }
-      const dt=new Date(v+'T00:00:00'), dow=dt.getDay();
-      const label=dt.getDate()+'.'+(dt.getMonth()+1);
-      let wk=DATES.findIndex(w=>w.includes(label)); if(wk<0) wk=1;
-      if(a.sessions.some(s=>s.date===label)){ toast('כבר יש מפגש בתאריך הזה'); return; }
-      a.sessions.push({id:a.id+'x'+label,dow,date:label,week:wk,oneOff:true,att:{},offers:[],
-                       mine:{to:0,from:0,seats:state.car.seats},fresh:true});
-      a.sessions.sort((p,q)=>p.week-q.week||DATES[p.week].indexOf(p.date)-DATES[q.week].indexOf(q.date));
-      pop(); toast('נוסף מפגש ביום '+DOW[dow]+' '+label); return;
+      try{
+        const {error} = await sb.rpc('add_one_off', {p_activity:id, p_date:v});
+        if(error) throw error;
+        await reload(); pop();
+        const d=new Date(v+'T00:00:00');
+        toast('נוסף מפגש ביום '+DOW[d.getDay()]+' '+d.getDate()+'.'+(d.getMonth()+1));
+      }catch(e){ toast('נכשל: '+(e.message||e)); }
+      return;
     }
-    case 'auto-att':{
-      const t=actById(id); t.autoAtt=!t.autoAtt;
-      if(t.autoAtt) t.sessions.forEach(s=>{ t.myKids.forEach(k=>s.att[k]=1); s.fresh=false; });
-      sAct(id); render(); toast(t.autoAtt?'נרשם לכל המפגשים':'בוטל'); return;
-    }
-    case 'rec-att':{
-      const t=actById(id), s=sess(id,sid); s.recAtt=!s.recAtt;
-      if(s.recAtt) t.sessions.filter(x=>x.dow===s.dow).forEach(x=>{ t.myKids.forEach(k=>x.att[k]=1); x.fresh=false; x.recAtt=1; });
-      sCtx(id,sid); render(); toast(s.recAtt?'יחול על כל יום '+DOWL[s.dow]:'בוטל'); return;
-    }
-    case 'rec-drive':{
-      const t=actById(id), s=sess(id,sid); s.recDrive=!s.recDrive;
-      if(s.recDrive) t.sessions.filter(x=>x.dow===s.dow).forEach(x=>{ x.mine.to=1; x.mine.from=1; x.recDrive=1; });
-      sCtx(id,sid); render(); toast(s.recDrive?'מסיעים כל יום '+DOWL[s.dow]:'בוטל'); return;
-    }
-    case 'self':{ const s=sess(id,sid); s.selfRide=!s.selfRide; sCtx(id,sid); return; }
+    case 'auto-att': toast('כללים חוזרים — בקרוב'); return;
+    case 'rec-att': toast('כללים חוזרים — בקרוב'); return;
+    case 'rec-drive': toast('כללים חוזרים — בקרוב'); return;
+    case 'self': toast('כללים חוזרים — בקרוב'); return;
   }
 });
 boot();
