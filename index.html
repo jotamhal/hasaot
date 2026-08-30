@@ -109,6 +109,15 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .half.drive.on .seatnote{color:rgba(255,255,255,.85)}
 .half.drive.on .leg{background:rgba(255,255,255,.22);color:rgba(255,255,255,.72)}
 .half.drive.on .leg.on{background:#fff;color:var(--drive)}
+/* רזרבה: אותו חצי, גוון שקט יותר — הצהרת נכונות ולא שיבוץ */
+.half.drive.res{background:var(--drive-soft);border-color:#f6bf95}
+.half.drive.res .hval,.half.drive.res .seatnote{color:#b45309}
+.half.drive.res .sw2{background:#f6bf95}
+.half.drive.res .leg{background:#fff;color:#b45309}
+.car.res .av{background:#fef3c7;color:#b45309}
+.car.res .cnm{color:#92400e}
+.resnote{font-size:12.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;
+  border-radius:11px;padding:9px 11px;margin-top:8px;line-height:1.5}
 
 .strip{width:100%;display:flex;align-items:center;gap:9px;padding:11px 14px;border-top:1px solid var(--line);
   font-size:13.5px;font-weight:600;text-align:right}
@@ -270,7 +279,8 @@ const state={
      pending:[{name:'יעל לוי',kid:'עידו',mail:'yael@…'}],
      sessions:[
       {id:'b01',dow:1,date:'31.8',week:0,place:'רגבה',att:{'דני':1,'נועה':1,'איתי':1},
-       offers:[{by:'דנה',to:1,from:1,seats:3}],mine:{to:0,from:0,seats:3}},
+       offers:[{by:'דנה',to:1,from:1,seats:3},{by:'מיכל',to:1,from:1,seats:2,role:'reserve'}],
+       mine:{to:0,from:0,seats:3}},
       {id:'b02',dow:2,date:'1.9',week:0,place:'בית העמק',att:{'דני':1,'נועה':1,'איתי':1,'שירה':1},
        offers:[{by:'מיכל',to:1,from:0,seats:3}],mine:{to:0,from:0,seats:3}},
       {id:'b03',dow:4,date:'3.9',week:0,place:'עברון',start:'17:30',end:'19:00',
@@ -310,9 +320,33 @@ const admLbl=n=>n===1?'מנהל אחד':n+' מנהלים';
 const famLbl=n=>n===1?'משפחה אחת':n+' משפחות';
 
 function driversFor(s,dir){
-  const l=s.offers.filter(o=>o[dir]).map(o=>({by:o.by,seats:o.seats,mine:false}));
-  if(s.mine[dir]) l.unshift({by:ME,seats:s.mine.seats,mine:true});
+  const l=s.offers.filter(o=>o[dir]&&o.role!=='reserve')
+                  .map(o=>({by:o.by,seats:o.seats,mine:false}));
+  if(s.mine[dir]&&s.mine.role!=='reserve') l.unshift({by:ME,seats:s.mine.seats,mine:true});
   return l;
+}
+/* מי הצהיר על נכונות אבל לא משובצים אליו ילדים */
+function reservesFor(s,dir){
+  const l=s.offers.filter(o=>o[dir]&&o.role==='reserve').map(o=>({by:o.by,mine:false}));
+  if(s.mine[dir]&&s.mine.role==='reserve') l.push({by:ME,mine:true});
+  return l;
+}
+/* האם יש כבר מספיק מקום בלעדיי — לפני שאני מדליק "מסיעים" */
+function coveredWithoutMe(s,dirs){
+  return dirs.every(d=>{
+    const riders=Object.keys(s.att).filter(k=>s.att[k]).length;
+    if(!riders) return false;
+    const cars=s.offers.filter(o=>o[d]&&o.role!=='reserve');
+    if(!cars.length) return false;
+    const cap=cars.reduce((n,o)=>n+o.seats+
+      Object.keys(s.att).filter(k=>s.att[k]&&KIDS[k]===o.by).length,0);
+    return cap>=riders;
+  });
+}
+function primaryNames(s,dirs){
+  const n=new Set();
+  dirs.forEach(d=>s.offers.filter(o=>o[d]&&o.role!=='reserve').forEach(o=>n.add(o.by)));
+  return [...n];
 }
 /* מקומות = מקומות פנויים לילדים אחרים. הילדים של הנהג נוסעים איתו ולא נספרים. */
 function assign(s,dir){
@@ -444,10 +478,11 @@ function dayHTML(a,s){
 
   /* --- שמאל: ימין גדול = און/אוף, שמאל = הלוך מעל חזור --- */
   const seats=(driving?m.seats:state.car.seats)+' מקומות פנויים';
-  const driveHalf=`<button class="half drive ${driving?'on':''}" data-a="drive" data-i="${a.id}" data-s="${s.id}">
+  const res=driving&&m.role==='reserve';
+  const driveHalf=`<button class="half drive ${driving&&!res?'on':''} ${res?'res':''}" data-a="drive" data-i="${a.id}" data-s="${s.id}">
       <span class="dmain"><span class="sw2 ${driving?'on':''}"></span>
-        <span class="hval">${driving?'מסיעים':'לא מסיעים'}</span>
-        <span class="seatnote">${seats}</span></span>
+        <span class="hval">${res?'רזרבה':driving?'מסיעים':'לא מסיעים'}</span>
+        <span class="seatnote">${res?'אם יתבטל — נכנסים':seats}</span></span>
       <span class="dlegs">
         <span class="leg ${m.to?'on':''}"   data-a="leg" data-i="${a.id}" data-s="${s.id}" data-d="to">הלוך</span>
         <span class="leg ${m.from?'on':''}" data-a="leg" data-i="${a.id}" data-s="${s.id}" data-d="from">חזור</span>
@@ -483,6 +518,9 @@ function detailHTML(a,s,d){
       <span class="cinfo"><span class="cnm">${c.mine?'אני':esc(c.by)} <em>· ${c.free} מקומות פנויים</em></span>
       <span class="pax">${c.pax.map(p=>(KIDS[p]===ME?`<b>${esc(p)}</b>`:esc(p))).join(' · ')||'—'}</span></span></div>`).join('');
     if(waiting.length) h+=`<div class="wait">⚠ ללא הסעה: ${waiting.map(esc).join(', ')}</div>`;
+    const rs=reservesFor(s,dir);
+    if(rs.length) h+=`<div class="resnote">🅿 רזרבה: ${rs.map(r=>esc(r.mine?'אני':r.by)).join(', ')}
+      — ${cars.length?'ייכנסו אם מישהו יבטל':'אין נהג משובץ, כדאי לפנות אליהם'}</div>`;
     return h+'</div>';
   };
   let h=blk('to','הלוך',a.t1)+blk('from','חזור',a.t2);
@@ -1034,6 +1072,23 @@ function editShare(a,s,diffs,title){
   navReplace({type:'modal', draw:()=>modalHTML(html)});
 }
 
+/* אם כבר יש כיסוי — לא להחליט בשקט, לשאול */
+function offerDrive(aid,sid,dirs){
+  const s=sess(aid,sid);
+  if(!coveredWithoutMe(s,dirs)) return applyDrive(aid,sid,dirs,1,'driver');
+  const who=primaryNames(s,dirs).join(' ו־') || 'מישהו אחר';
+  modal(`<h3>כבר יש מספיק מקום</h3>
+    <p><b>${esc(who)}</b> מסיע/ה, ויש מקום לכל הילדים.<br>
+       אם תירשמו כרזרבה — לא ישובצו אליכם ילדים,
+       ואם ${esc(who)} יבטל/תבטל תירשמו כנהג/ת במקום.</p>
+    <div class="btns" style="flex-direction:column">
+      <button class="btn p" data-a="as-reserve" data-i="${aid}" data-s="${sid}"
+        data-d="${dirs.join(',')}">להירשם כרזרבה</button>
+      <button class="btn s" data-a="as-driver" data-i="${aid}" data-s="${sid}"
+        data-d="${dirs.join(',')}">אני מסיע/ה בכל מקרה</button>
+    </div>`);
+}
+
 function cancelWarn(aid,sid,dirs){
   const s=sess(aid,sid), pax=new Set();
   dirs.forEach(d=>{const c=assign(s,d).cars.find(c=>c.mine); if(c) c.pax.forEach(p=>{if(KIDS[p]!==ME) pax.add(p);});});
@@ -1043,13 +1098,14 @@ function cancelWarn(aid,sid,dirs){
     <div class="btns"><button class="btn s" data-a="close">להשאיר</button>
     <button class="btn p" data-a="do-cancel" data-i="${aid}" data-s="${sid}" data-d="${dirs.join(',')}">לבטל בכל זאת</button></div>`);
 }
-function applyDrive(aid,sid,dirs,v){
+function applyDrive(aid,sid,dirs,v,role){
   const s=sess(aid,sid); dirs.forEach(d=>s.mine[d]=v);
-  if(v) s.fresh=false;
+  if(v){ s.fresh=false; s.mine.role = role || s.mine.role || 'driver'; }
+  else if(!(s.mine.to||s.mine.from)) delete s.mine.role;
   render();
   /* אם נשארנו בלי הסעה — מחליפים את חלונית האזהרה בהודעת השיתוף */
   if(!v && !(s.mine.to||s.mine.from)) shareModal(actById(aid),s,'cancel');
-  else { navCloseLayers(); if(v) toast('מסיעים ביום זה'); }
+  else { navCloseLayers(); if(v) toast(s.mine.role==='reserve'?'נרשמתם כרזרבה':'מסיעים ביום זה'); }
 }
 
 function saveKid(){
@@ -1238,14 +1294,16 @@ document.addEventListener('click',e=>{
     }
     case 'drive':{
       const s=sess(id,sid);
-      if(s.mine.to||s.mine.from) cancelWarn(id,sid,['to','from']); else applyDrive(id,sid,['to','from'],1);
+      if(s.mine.to||s.mine.from) cancelWarn(id,sid,['to','from']); else offerDrive(id,sid,['to','from']);
       return;
     }
     case 'leg':{
       const s=sess(id,sid), d=el.dataset.d;
-      if(s.mine[d]) cancelWarn(id,sid,[d]); else applyDrive(id,sid,[d],1);
+      if(s.mine[d]) cancelWarn(id,sid,[d]); else offerDrive(id,sid,[d]);
       return;
     }
+    case 'as-driver':  applyDrive(id,sid,el.dataset.d.split(','),1,'driver');  return;
+    case 'as-reserve': applyDrive(id,sid,el.dataset.d.split(','),1,'reserve'); return;
     case 'do-cancel': applyDrive(id,sid,el.dataset.d.split(','),0); return;
     case 'share': shareModal(actById(id),sess(id,sid),'ask'); return;
     case 'wa':{
